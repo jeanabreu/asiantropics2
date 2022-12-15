@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_report_g4s_pdf" model="ir.actions.report">
+            <field name="name">report_g4s_pdf</field>
+            <field name="model">pt_multicert_felgt.g4s_pdf.report</field>
+            <field name="report_type">g4s_pdf</field>
+            <field name="report_name">pt_multicert_felgt.report_g4s</field>
+            <field name="report_file">pt_multicert_felgt.report_g4s</field>
+        </record>
+    </data>
+</odoo>

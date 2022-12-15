@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="reporte_mayor">
+        <t t-call="web.html_container">
+
+            <t t-set="data_report_page_offset" t-value="data['folio_inicial']-1"/>
+            <div class="header text-left" style="font-size: 14px">
+                <img t-if="company_id.logo" t-att-src="image_data_uri(company_id.logo)" style="max-height: 90px; margin-right: 20px" class="float-right" alt="Logo"/>
+                <div>
+                    <span t-esc="company_id.company_registry"/>
+                </div>
+                <div>
+                NIT: <span t-esc="company_id.vat"/>
+                </div>
+                <div>
+                    <span t-esc="company_id.street"/>
+,                    <span t-esc="company_id.city"/>
+,                    <span t-esc="company_id.country_id.name"/>
+                </div>
+                <div style="font-size: 10px">
+                    Moneda: Quetzal GTQ
+                </div>
+                <div align="center" style="width: 100%">
+                    <h5>Libro Mayor General</h5>
+                </div>
+                <div class="clearfix mb8"/>
+                <div class="row" style="font-size: 10px">
+                    <div class="col-4" style="font-size: 10px">
+                      Desde:<span t-esc="data['fecha_inicio']" t-esc-options="{'widget':'date'}"/>
+                    </div>
+                    <div class="col-4" style="font-size: 10px">
+                      Hasta:<span t-esc="data['fecha_final']" t-esc-options="{''widget': 'date'}"/>
+                    </div>
+                    <div class="col-4">
+                        <t t-set="folio_inicial" t-value="data['folio_inicial']-1"/>
+                        <script>
+                                function subst() {
+                                    var fo = '<t t-esc="folio_inicial"/>';
+                                    var folio = parseInt(fo)
+                                    var vars = {};
+                                    var x = document.location.search.substring(1).split('&amp;');
+                                    for (var i in x) {
+                                        var z = x[i].split('=', 2);
+                                        vars[z[0]] = unescape(z[1]);
+                                    }
+                                    var x = ['sitepage', 'sitepages', 'section', 'subsection', 'subsubsection'];
+                                    var z = {'sitepage': 'page', 'sitepages': 'topage'};
+                                    for (var i in x) {
+                                        var y = document.getElementsByClassName(z[x[i]] || x[i])
+                                        for (var j=0; j&lt;y.length; ++j)
+                                            y[j].textContent = parseInt(vars[x[i]]) + folio;
+                                    }
+        
+                                    var index = vars['webpage'].split('.', 4)[3];
+                                    var header = document.getElementById('minimal_layout_report_headers');
+                                    if(header !== null){
+                                        var companyHeader = header.children[index];
+                                        header.textContent = '';
+                                        header.appendChild(companyHeader);
+                                    }
+                                    var footer = document.getElementById('minimal_layout_report_footers');
+                                    if(footer !== null){
+                                        var companyFooter = footer.children[index];
+                                        footer.textContent = '';
+                                        footer.appendChild(companyFooter);
+                                    }
+                                }
+                            </script>
+                        <strong>Folio No.</strong>&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;
+                        <strong>
+                      &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;<span class="page"/>
+                        </strong>
+                    </div>
+                </div>
+            </div>
+            <t t-call="web.external_layout">
+                <div class="page" style="font-family:'Lucida Sans Unicode', 'Lucida Grande', sans-serif">
+                    <t t-set="result" t-value="lineas(data)"/>
+
+
+                    <t t-if="data['grouping_type'] == 'daily'">
+
+                        <t t-set="account_names" t-value="result['account_names']"/>
+                        <t t-set="data_lines" t-value="result['data_lines']"/>
+
+                        <t t-foreach="data_lines" t-as="account_id">
+                            <t t-set="account_ids" t-value="data_lines[account_id]"/>
+
+                            <div style="width: 100%; background-color: #CBCBCB; font-size: 12px">
+                                <t t-esc="account_names[account_id][0]"/>
+                            </div>
+
+                            <t t-set="account_balance" t-value="account_names[account_id][1]"/>
+                            <t t-set="num_dates" t-value="0"/>
+
+                            <t t-foreach="account_ids" t-as="date">
+
+                                <t t-set="num_dates" t-value="num_dates+1"/>
+                                <t t-set="lines" t-value="account_ids[date]"/>
+                                <div>
+                                    <div style="font-size: 10px">
+                                Fecha: <t t-esc="date"/>
+                                    </div>
+                                </div>
+                                <table class="table-sm o_main_table" style="font-size: 9px; width: 100%">
+
+                                    <thead style="border: 1px solid #000" align="center">
+                                        <th style="width: 10%; border: 1px solid #000" >Fecha</th>
+                                        <th style="width: 15%; border: 1px solid #000">Débito</th>
+                                        <th style="width: 15%; border: 1px solid #000">Crédito</th>
+                                        <th style="width: 15%; border: 1px solid #000">Saldo</th>
+                                        <th style="width: 20%; border: 1px solid #000">Póliza</th>
+                                        <th>Descripción</th>
+                                    </thead>
+
+                                    <tbody>
+                                        <t t-set="num_lines" t-value="0"/>
+                                        <t t-set="opening_balance" t-value="account_names[account_id][1]"/>
+
+
+                                        <t t-set="subtotal_debe" t-value="0"/>
+                                        <t t-set="subtotal_haber" t-value="0"/>
+
+                                        <t t-foreach="lines" t-as="line">
+                                            <t t-set="num_lines" t-value="num_lines+1"/>
+
+                                            <tr t-if="num_lines==1 and num_dates &lt;= len(account_ids)">
+                                                <td colspan="3" style="font-size: 9px; text-align: center; border: 1px solid #000">
+                                                    <strong>
+                                                        Saldo Inicial
+                                                    </strong>
+                                                </td>
+                                                <td style="text-align: right; border: 1px solid #000">
+                                                    <t t-esc="account_balance" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                </td>
+                                                <td style="border: 1px solid #000"/>
+                                                <td style="border: 1px solid #000"/>
+
+                                            </tr>
+
+
+                                            <tr>
+                                                <td style="border: 1px solid #000; text-align: center">
+                                                    <t t-esc="line['fecha_movimiento']"/>
+                                                </td>
+                                                <td style="text-align: right;border: 1px solid #000">
+                                                    <t t-esc="line['debe']" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                </td>
+                                                <td style="text-align: right;border: 1px solid #000;">
+                                                    <t t-esc="line['haber']" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                </td>
+                                                <td style="text-align: right;border: 1px solid #000">
+                                                    <t t-esc="line['balance']" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+
+                                                </td>
+                                                <td style="border: 1px solid #000;">
+                                                    <t t-esc="line['poliza']"/>
+                                                </td>
+                                                <td style="border: 1px solid #000">
+                                                    <t t-esc="line['descripcion']"/>
+                                                </td>
+                                            </tr>
+                                            <tr t-if="len(lines) == num_lines">
+                                                <td style="font-size: 9px; text-align: center; border-top-style: double;border: 1px solid #000">
+                                                    Total
+                                                </td>
+                                                <td style="text-align: right; border-top-style: double;border: 1px solid #000">
+                                                    <t t-esc="result['subtotales'][account_id][date]['subtotal_debe']" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                </td>
+                                                <td style="text-align: right; border-top-style: double;border: 1px solid #000">
+                                                    <t t-esc="result['subtotales'][account_id][date]['subtotal_haber']" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                </td>
+                                                <td style="text-align: right; border-top-style: double;border: 1px solid #000">
+                                                    <t t-esc="line['balance']" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                    <t t-set="account_balance" t-value="line['balance']"/>
+                                                </td>
+                                                <td style="text-align: right; border-top-style: double;border: 1px solid #000"/>
+                                                <td style="text-align: right; border-top-style: double;border: 1px solid #000"/>
+                                            </tr>
+
+                                        </t>
+
+                                    </tbody>
+                                </table>
+                            </t>
+                        </t>
+                    </t>
+                    <t t-if="data['grouping_type'] == 'monthly' ">
+
+                        <t t-set="account_names" t-value="result['account_names']"/>
+                        <t t-set="account_ids" t-value="result['data_lines']"/>
+                        <t t-foreach="account_ids" t-as="account_id">
+                            <div>
+                                <div style="width: 100%; background-color: #CBCBCB; font-size: 12px">
+                                    <t t-esc="account_names[account_id][0]"/>
+                                </div>
+                            </div>
+
+                            <t t-set="saldo_inicial" t-value="account_names[account_id][1]"/>
+                            <t t-set="months" t-value="account_ids[account_id]"/>
+                            <t t-set="num_months" t-value="0"/>
+                            <t t-foreach="months" t-as="month">
+                                <t t-set="num_months" t-value="num_months + 1"/>
+
+                                <div>
+                                    <div style="font-size: 10px">
+                        Mes: <t t-esc="month"/>
+                                    </div>
+                                </div>
+
+                                <table class="table-sm o_main_table" style="font-size: 9px; width: 100%">
+                                    <thead style="border: 1px solid #000" align= "center">
+                                        <tr style="border: 1px solid #000">
+                                            <th style="width: 10%; border: 1px solid #000">Fecha</th>
+                                            <th style="width: 15%; border: 1px solid #000">Débito</th>
+                                            <th style="width: 15%; border: 1px solid #000">Crédito</th>
+                                            <th style="width: 15%; border: 1px solid #000">Saldo</th>
+                                            <th style="width: 15%; border: 1px solid #000">Póliza</th>
+                                            <th>Descripción</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        <t t-set="lines" t-value="months[month]"/>
+                                        <t t-set="subtotal_haber" t-value="0"/>
+                                        <t t-set="subtotal_debe" t-value="0"/>
+                                        <t t-set="num_lines" t-value="0"/>
+
+                                        <t t-foreach="lines" t-as="line">
+                                            <t t-set="num_lines" t-value="num_lines+1"/>
+                                            <tr t-if="num_lines==1 and num_months &lt;= len(months)" style="border: 1px solid #000">
+                                                <td colspan="3" style="text-align: center; border-bottom-style: solid; border-bottom-width: 1px;border: 1px solid #000">
+                                                    <strong>
+                                                        Saldo Inicial
+                                                    </strong>
+                                                </td>
+                                                
+                                                <td style="text-align: right; border-bottom-style: solid; border-bottom-width: 1px;border: 1px solid #000">
+                                                    <t t-esc="saldo_inicial" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                </td>
+                                                <td style="border-bottom-style: solid; border-bottom-width: 1px;border: 1px solid #000"/>
+                                                <td style="border-bottom-style: solid; border-bottom-width: 1px;border: 1px solid #000"/>
+                                            </tr>
+
+                                            <tr>
+                                                <td style="border: 1px solid #000; text-align: center">
+                                                    <t t-esc="line['fecha_movimiento']"/>
+                                                </td>
+                                                <td style="border: 1px solid #000">
+                                                    <div align="right">
+                                                        <t t-esc="line['debe']" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                        <t t-set="subtotal_debe" t-value="subtotal_debe + line['debe']"/>
+                                                    </div>
+                                                </td>
+                                                <td style="border: 1px solid #000">
+                                                    <div align="right">
+                                                        <t t-esc="line['haber']" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                        <t t-set="subtotal_haber" t-value="subtotal_haber + line['haber']"/>
+                                                    </div>
+                                                </td>
+                                                <td style="border: 1px solid #000">
+                                                    <div align="right">
+                                                        <t t-esc="line['balance']" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                    </div>
+                                                </td>
+                                                <td style="border: 1px solid #000">
+                                                    <t t-esc="line['poliza']"/>
+                                                </td>
+                                                <td style="border: 1px solid #000">
+                                                    <t t-esc="line['descripcion']"/>
+                                                </td>
+                                            </tr>
+                                            <tr t-if="num_lines == len(months[month])">
+                                                <td style="text-align: right; border-top-style: double; font-size: 9px;border: 1px solid #000">
+                                                    Total
+                                                </td>
+                                                <td style="text-align: right; border-top-style: double;border: 1px solid #000">
+                                                    <t t-esc="subtotal_debe" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                </td>
+                                                <td style="text-align: right; border-top-style: double;border: 1px solid #000">
+                                                    <t t-esc="subtotal_haber" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                </td>
+                                                <td style="text-align: right; border-top-style: double;border: 1px solid #000">
+                                                    <t t-esc="line['balance']" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                                    <t t-set="saldo_inicial" t-value="line['balance']"/>
+                                                </td>
+                                                <td style="text-align: right; border-top-style: double;border: 1px solid #000"/>
+                                                <td style="text-align: right; border-top-style: double;border: 1px solid #000"/>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+
+                                </table>
+                            </t>
+
+
+                        </t>
+                    </t>
+                </div>
+                <div class="footer">
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

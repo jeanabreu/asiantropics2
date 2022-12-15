@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_cc_payment_commisions_journal_percentage_user,cc_payment_commisions.journal_percentage,model_cc_payment_commisions_journal_percentage,account.group_account_readonly,1,1,1,1

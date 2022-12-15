@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+
+    <record id="l10n_gt_extra_account_move_form_view" model="ir.ui.view">
+        <field name="name">l10n_gt_extra_account_move_form_view</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form" />
+        <field name="arch" type="xml">
+            <button name="button_cancel" position="after">
+                <button name="check_isr_iva_lines" states="draft" string="actualizar Impuestos" type="object" />
+            </button>
+            <field name="ref" position="after">
+                <field name="bank_operation_ref" readonly="1" />
+                <field name="provider_invoice_serial" placeholder="Serie" attrs="{'invisible': [('move_type', 'not in', ('in_invoice','in_refund'))], 'required': [('move_type', 'in', ('in_invoice','in_refund'))]}" />
+                <field name="provider_invoice_number" placeholder="Número" attrs="{'invisible': [('move_type', 'not in', ('in_invoice','in_refund'))], 'required': [('move_type', 'in', ('in_invoice','in_refund'))]}" />
+                <field name="isr_withold_amount" invisible="1" />
+                <field name="iva_withold_amount" invisible="1" />
+            </field>
+            <field name="invoice_payments_widget" position="after">
+                <field name="capitalization_move_id" attrs="{'invisible': [('capitalization_move_id', '=', False)]}" />
+            </field>
+        </field>
+    </record>
+
+    <record id="l10n_gt_extra_account_move_tree_view" model="ir.ui.view">
+        <field name="name">l10n_gt_extra_account_move_tree_view</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree" />
+        <field name="arch" type="xml">  
+            <field name="ref" position="after">
+                <field name="bank_operation_ref" optional="show" />
+                <field name="move_type" invisible="1" />
+                <field name="provider_invoice_serial" placeholder="Serie" attrs="{'invisible': [('move_type', 'not in', ('in_invoice','in_refund'))], 'required': [('move_type', 'in', ('in_invoice','in_refund'))]}" />
+                <field name="provider_invoice_number" placeholder="Número" attrs="{'invisible': [('move_type', 'not in', ('in_invoice','in_refund'))], 'required': [('move_type', 'in', ('in_invoice','in_refund'))]}" />
+
+                <field name="isr_withold_amount" invisible="1" />
+                <field name="iva_withold_amount" invisible="1" />
+            </field>
+        </field>
+    </record>
+    <record id="l10n_gt_extra_account_move_filter" model="ir.ui.view">
+        <field name="name">l10n_gt_extra_account_move_filter</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_account_move_filter" />
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="bank_operation_ref" />
+            </field>
+        </field>
+    </record>
+
+    <record id="account_invoice_view_tax_extra_info" model="ir.ui.view">
+        <field name="name">account_invoice_view_tax_extra_info</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form" />
+        <field name="arch" type="xml">
+            <field name="amount_total" position="before">
+                <field name="iva_withold_amount" attrs="{'invisible':[('tax_withholding_iva', '=', 'no_witholding')], 'readonly': ['|',('state', '!=', 'draft'), ('move_type', 'in', ('out_invoice','out_refund'))]}" />
+                <field name="tax_withholding_iva" invisible="1" />
+                <field name="tax_withholding_isr" invisible="1" />
+                <field name="user_country_id" invisible="1" />
+                <field name="isr_withold_amount"  attrs="{'invisible':[('tax_withholding_isr', '!=', 'definitive_withholding')], 'readonly': ['|',('state', '!=', 'draft'), ('move_type', 'in', ('out_invoice','out_refund'))]}" />
+                <field name="tax_withold_amount" invisible="1" ></field>
+            </field>
+            <xpath expr="//page[@id='other_tab']" position="after">
+                <page name="ref_analytic_line_ids_page" string="Apuntes analíticos" attrs="{'invisible':[('show_analytic_lines','!=',True)]}">
+                    <field name="show_analytic_lines" invisible="1" />
+                    <field name="ref_analytic_line_ids">
+                        <tree>
+                            <field name="account_id" />
+                            <field name="name" />
+                            <field name="currency_id" />
+                            <field name="amount" />
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

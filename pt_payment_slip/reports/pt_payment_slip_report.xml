@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <template id="internal_basic_layout">
+
+        <div class="header">
+
+            <table width="100%">
+                <tr style="height: 50px;">
+                    <td rowspan="5" width="20%" style="vertical-align: top; text-align:left">
+                        <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)" alt="Logo" style="width:85%"/>
+                    </td>
+                    <td width="60%">
+                        <div class="text-center mt-5" style="font-size: 20px !important;">
+                            <span t-field="o.company_id.name" />
+                        </div>
+                    </td>
+                    <td width="20%" rowspan="3" style="vertical-align: middle;">
+                        <strong style="font-size: 22px !important;">
+                            <span t-field="o.name" />
+                        </strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="text-center" style="font-size: 22px !important;">
+                            <strong>
+                                CONTRASEÑA DE PAGO
+                            </strong>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-size: 16px !important;">
+                        <div style="padding-top:20px">
+                            <table>
+                                <tr>
+                                    <td style="width: 200px; text-align:left">
+                                        <strong>
+                                            Factura No:
+                                        </strong>
+                                    </td>
+                                    <td style="width: 250px; text-align:left">
+                                        <!--<span t-field="o.invoice_ref" />-->
+                                        <span t-field="o.invoice_id.provider_invoice_serial" />-<span t-field="o.invoice_id.provider_invoice_number" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width: 200px; text-align:left">
+                                        <strong>
+                                            Proveedor:
+                                        </strong>
+                                    </td>
+                                    <td style="width: 250px; text-align:left">
+                                        <span t-field="o.partner_id.name" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width: 200px; text-align:left">
+                                        <strong>
+                                            Total de Factura:
+                                        </strong>
+                                    </td>
+                                    <td style="width: 250px; text-align:left">
+                                        <span t-field="o.amount" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width: 200px; text-align:left">
+                                        <strong>
+                                            Fecha de Recepción:
+                                        </strong>
+                                    </td>
+                                    <td style="width: 250px; text-align:left">
+                                        <span t-field="o.date" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width: 250px; text-align:left">
+                                        <strong>
+                                            Fecha de Pago:
+                                        </strong>
+                                    </td>
+                                    <td style="width: 250px; text-align:left">
+                                        <span t-field="o.payment_date" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width: 250px; text-align:left">
+                                        <strong>
+                                            Orden No.
+                                        </strong>
+                                    </td>
+                                    <td style="width: 250px; text-align:left">
+                                        <span t-field="o.order_number" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+        <div class="article">
+            <t t-raw="0" />
+        </div>
+    </template>
+
+    <template id="pt_payment_slip_report">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <div class="page">
+                    <t t-call="pt_payment_slip.internal_basic_layout">
+                        <div style="padding-top: 200px; text-align:center; " width="100%">
+                            <table width="40%" style="margin-left:auto; margin-right:auto; ">
+                                <tr style="font-size: 16px !important; text-align:center">
+                                    <td style="width: 50%">
+                                        <!--<strong>
+                                            Orden No.
+                                        </strong>-->
+                                    </td>
+                                    <td style="width: 50%">
+                                        <!--<strong>
+                                            Fecha de Orden
+                                        </strong>-->
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <!--<span t-field="o.order_number" />-->
+                                    </td>
+                                    <td>
+                                        <!--<span t-field="o.order_date" />-->
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div style="padding-top: 60px; text-align:left; font-size: 12px !important;" width="100%">
+                            <p>
+                                <span t-field="o.invoice_id.company_id.payment_slip_detail_line_1" /><br />
+                                <span t-field="o.invoice_id.company_id.payment_slip_detail_line_2" /><br />
+                                <span t-field="o.invoice_id.company_id.payment_slip_detail_line_3" /><br />                                
+                            </p>
+                        </div>
+                        <div style="text-align:center; padding-top:40px">
+                            __________________________________________________________<br/>
+                            <strong>
+                                <span t-field="o.signed_by_employee_id" />
+                            </strong>
+                        </div>
+                        <div style="padding-top: 20px; text-align:left; font-size: 14px !important;" width="100%">
+                        </div>
+                        <div style="padding-top: 20px; text-align:left; font-size: 14px !important;" width="100%">
+                            <p t-if="o.note">
+                               <strong>Nota:</strong> <span t-field="o.note" />
+                            </p>
+                        </div>
+                    </t>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

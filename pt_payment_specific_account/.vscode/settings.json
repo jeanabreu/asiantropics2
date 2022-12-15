@@ -1,0 +1,42 @@
+{
+    "cSpell.language": "en,es",
+
+    "python.pythonPath": "/media/guate2006/TI10712600F/gtr_projects/Linux_projects/gtr_projects/odoo-13-ce-ve/bin/",
+
+   // use this so the autocompleate/goto definition will work with python extension
+   "python.autoComplete.extraPaths": [
+       "${workspaceRoot}/odoo/addons",
+       "${workspaceRoot}/odoo" ],
+   
+       "python.linting.pylintPath": "/media/guate2006/TI10712600F/gtr_projects/Linux_projects/gtr_projects/odoo-13-ce-ve/bin/pylint",
+   
+       "python.linting.enabled": true,
+   
+       //load the pylint_odoo
+   
+       "python.linting.pylintArgs": ["--load-plugins", "pylint_odoo"],
+   
+       "python.formatting.provider": "yapf",
+   
+       "python.formatting.yapfPath": "/media/guate2006/TI10712600F/gtr_projects/Linux_projects/gtr_projects/odoo-13-ce-ve/bin/",
+
+       "python.linting.pycodestylePath": "/media/guate2006/TI10712600F/gtr_projects/Linux_projects/gtr_projects/odoo-13-ce-ve/bin/pycodestyle",
+
+       "python.linting.pycodestyleArgs": ["--max-line-length=350"],
+   
+       // add this auto-save option so the pylint will sow errors while editing otherwise
+       //it will only show the errors on file save
+       "files.autoSave": "afterDelay",
+       "files.autoSaveDelay": 500,
+   
+       // The following will hide the compiled file in the editor/ add other file to hide them from editor
+       "files.exclude": {
+           "**/*.pyc": true
+       },
+       "python.linting.pylintEnabled": false,
+    "python.linting.pycodestyleEnabled": true,
+    "python.analysis.extraPaths": [
+        "${workspaceRoot}/odoo/addons",
+        "${workspaceRoot}/odoo"
+    ],
+}

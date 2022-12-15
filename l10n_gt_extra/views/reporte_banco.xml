@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="reporte_banco">
+        <t t-call="web.html_container">
+            <div class="header">
+                <t t-set="tab" t-value="'  '.replace('',u'\xa0').encode('utf-8')"/>
+                <img t-if="company_id.logo" t-att-src="image_data_uri(company_id.logo)" class="float-left" alt="Logo" height="80" width="90"/>
+                <div class="float-left company_address" style="font-size: 10px">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <strong t-field="res_company.partner_id.name"/>
+                        </div>
+                        <div class="col-sm-4">
+                            <strong t-esc="tab"/>
+                        </div>
+                        <t t-set="folio_inicial" t-value="data['folio_inicial']-1"/>
+                        <div class="col-sm-4 text-right">
+                            <div>
+                                Folio: 
+                                <script>
+                                    function subst() {
+                                        var fo = '<t t-esc="folio_inicial"/>';
+                                        var folio = parseInt(fo)
+                                        var vars = {};
+                                        var x = document.location.search.substring(1).split('&amp;');
+                                        for (var i in x) {
+                                            var z = x[i].split('=', 2);
+                                            vars[z[0]] = unescape(z[1]);
+                                        }
+                                        var x = ['sitepage', 'sitepages', 'section', 'subsection', 'subsubsection'];
+                                        var z = {'sitepage': 'page', 'sitepages': 'topage'};
+                                        for (var i in x) {
+                                            var y = document.getElementsByClassName(z[x[i]] || x[i])
+                                            for (var j=0; j&lt;y.length; ++j)
+                                                y[j].textContent = parseInt(vars[x[i]]) + folio;
+                                        }
+            
+                                        var index = vars['webpage'].split('.', 4)[3];
+                                        var header = document.getElementById('minimal_layout_report_headers');
+                                        if(header !== null){
+                                            var companyHeader = header.children[index];
+                                            header.textContent = '';
+                                            header.appendChild(companyHeader);
+                                        }
+                                        var footer = document.getElementById('minimal_layout_report_footers');
+                                        if(footer !== null){
+                                            var companyFooter = footer.children[index];
+                                            footer.textContent = '';
+                                            footer.appendChild(companyFooter);
+                                        }
+                                    }
+                                </script>
+                                <span class="page"/>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div>
+                        <span t-field="company_id.street"/>
+                    </div>
+
+                    <div>
+                        <span t-field="company_id.vat"/>
+                    </div>
+
+                    <div>
+                        <strong>Modeda:</strong>
+                        <span t-esc="company_id.currency_id.currency_unit_label"/>
+                        <span t-esc="company_id.currency_id.name"/>
+                    </div>
+
+                </div>
+                <div class="clearfix mb8"/>
+
+                <div align="center" style="width: 100%">
+                  Libro Banco
+                </div>
+                <div class="row" style="font-size: 10px">
+                    <div class="col-4" style="font-size: 10px">
+                        <strong>Fecha de Contabilización desde:</strong>
+                        <span t-esc="data['fecha_desde']" t-esc-options="{'widget':'date'}"/>
+                        Hasta:
+                        <span t-esc="data['fecha_hasta']" t-esc-options="{'widget':'date'}"/>
+                    </div>
+                </div>
+            </div>
+            <t t-call="web.external_layout">
+                <div class="page" style="font-family:'Lucida Sans Unicode', 'Lucida Grande', sans-serif">
+                    <div class="col-xs-4" style="font-size: 12px !important;">
+                        <strong>Cuenta:</strong>
+                        <span t-esc="data['cuenta_bancaria_id'][1]"/>
+                        <br/>
+                    </div>
+                    <table class="table table-borderless" style="font-size: 9px !important;">
+                        <thead style="font-size: 8px; border: 1px solid black;">
+                            <tr style="border: 1px solid black; min-height:100mm">
+                                <th style="border: 1px solid black">Fecha</th>
+                                <th style="border: 1px solid black">Doc</th>
+                                <th style="border: 1px solid black">Nombre</th>
+                                <th style="border: 1px solid black">Concepto</th>
+                                <th style="border: 1px solid black">Crédito</th>
+                                <th style="border: 1px solid black">Débito</th>
+                                <th style="border: 1px solid black"> Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4" align="center" style="border: 1px solid black">
+                                    Saldo Inicial
+                                </td>
+                                <td class="text-right" style="border: 1px solid black">
+                                </td>
+                                <td class="text-right" style="border: 1px solid black">
+                                </td>
+                                <td class="text-right" style="border: 1px solid black">
+                                    <span t-esc="balance_inicial['balance_moneda'] or balance_inicial['balance']" t-options="{'widget': 'monetary', 'display_currency': moneda}"/>
+                                </td>
+                            </tr>
+                            <tr t-foreach="lineas(data)" t-as="l" style="page-break-inside: avoid;">
+                                <td style="border-collapse: collapse; border: 1px solid black">
+                                    <span t-esc="l['fecha']" t-options="{&quot;widget&quot;: &quot;date&quot;}"/>
+                                </td>
+                                <td style="border-collapse: collapse; border: 1px solid black">
+                                    <span t-esc="l['documento']"/>
+                                </td>
+                                <td style="border-collapse: collapse; border: 1px solid black">
+                                    <span t-esc="l['nombre']"/>
+                                </td>
+                                <td style="border-collapse: collapse; border: 1px solid black">
+                                    <span t-esc="l['concepto']"/>
+                                </td>
+                                <td style="border-collapse: collapse; border: 1px solid black">
+                                    <span t-esc="l['debito']" t-options="{'widget': 'monetary', 'display_currency': l['moneda']}"/>
+                                </td>
+                                <td style="border-collapse: collapse; border: 1px solid black">
+                                    <span t-esc="l['credito']" t-options="{'widget': 'monetary', 'display_currency': l['moneda']}"/>
+                                </td>
+                                <td style="border-collapse: collapse; border: 1px solid black">
+                                    <span t-esc="l['balance']" t-options="{'widget': 'monetary', 'display_currency': l['moneda']}"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="footer"/>
+            </t>
+        </t>
+    </template>
+</odoo>

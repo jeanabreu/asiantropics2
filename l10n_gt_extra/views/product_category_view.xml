@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="l10n_gt_extra_product_category_form_view" model="ir.ui.view">
+        <field name="name">l10n_gt_extra.l10n_gt_extra_product_category_form_view</field>
+        <field name="model">product.category</field>
+        <field name="inherit_id" ref="product.product_category_form_view" />
+        <field name="arch" type="xml">
+            <field name="property_account_expense_categ_id" position="after">
+                <field name="sat_iva_type_product" />
+            </field>
+        </field>
+    </record>
+</odoo>

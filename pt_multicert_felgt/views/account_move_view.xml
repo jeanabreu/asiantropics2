@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+        <record model="ir.ui.view" id="pt_multicert_felgt_account_invoice_form_view_inherit">
+                <field name="name">pt.multicert.felgt.account.invoice.form.inherit</field>
+                <field name="model">account.move</field>
+                <field name="inherit_id" ref="account.view_move_form" />
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+
+                        <xpath expr="//button[@name='button_draft']" position="after">
+                                <button name="action_debit_note" type="object" string="Nota de débito" groups="account.group_account_invoice" attrs="{'invisible': ['|',('move_type', '=', 'out_refund'), ('state', 'not in', ('posted'))]}"/>
+                        </xpath>
+
+                        <field name="invoice_date" position="after">
+                                <field name="fel_certifier" invisible="1" />
+                                <field name="dte_number" readonly="1" attrs="{'invisible': [('dte_number', '=', False)]}" />
+                                <field name="fel_link" attrs="{'invisible': ['|', ('uuid', '=', False), ('fel_certifier', 'not in', ('infile', 'digifact', 'forcon'))]}" widget="url" text="VER FACTURA ELECTRÓNICA"/>
+                                <button name="generate_g4s_pdf" type="object" class="oe_highlight" icon="fa-file-pdf-o" string="PDF" attrs="{'invisible': ['|', ('uuid', '=', False),('fel_certifier', '!=', 'g4s')]}" />
+                        </field>
+                        <field name="fiscal_position_id" position="after">
+                                <field name="has_advance_payment" />
+                                <field name="advance_untaxed_amount" />
+                                <field name="advance_total_amount" />
+                                <field name="is_receipt" />
+                                <field name="old_tax_regime" attrs="{'invisible': [('move_type', '!=', 'out_refund')]}" />
+                                <field name="credit_note" attrs="{'invisible': [('move_type', '!=', 'out_refund')]}" />
+                                <field name="fel_gt_invoice_type" attrs="{'invisible': [('is_receipt', '=', True)]}" />
+                                <field name="fel_gt_document_type" attrs="{'invisible': [('is_receipt', '=', False)]}" />
+                                <field name="fel_gt_withhold_amount" readonly="1" />
+                                <field name="source_debit_note_id" readonly="1"/>
+                                <field name="debit_note_id" readonly="1" />
+                                <field name="serie" readonly="1" />
+                                <field name="uuid" readonly="1" />
+                                <field name="dte_date" readonly="1" />
+                                <field name="total_in_letters" readonly="1" />
+                                <field name="is_foreign_customer" invisible="1" />
+                        </field>
+
+                        <xpath expr="//field[@name='invoice_incoterm_id']" position="attributes">
+                                <attribute name="attrs">{'required': [('is_foreign_customer', '=', True)]}</attribute>
+                        </xpath>
+
+                </field>
+        </record>
+
+</odoo>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+        <record model="ir.ui.view" id="automated_rate_account_invoice_form_view_inherit">
+                <field name="name">automated.rate.account.invoice.form.inherit</field>
+                <field name="model">account.move</field>
+                <field name="inherit_id" ref="account.view_move_form" />
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <field name="payment_reference" position="before">
+                        <field name="show_conversion_rate" invisible="1"/>
+                        <field name="account_check_user_group" invisible="1" />
+                        <field name="conversion_rate_ref_readonly_store" invisible="1" />
+                        <field name="conversion_rate_ref" attrs="{'invisible':[('show_conversion_rate','=', False)], 'readonly':[('account_check_user_group','=', False)]}"/>
+                        <button name="update_conversion" string="Actualizar tasa" class="oe_highlight" type="object" attrs="{'invisible':[('show_conversion_rate','=', False)] }"/>
+                    </field>
+                </field>
+        </record>
+
+</odoo>

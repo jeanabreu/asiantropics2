@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+
+        <record model="ir.ui.view" id="pt_multicert_felgt_account_tax_form_view_inherit">
+                <field name="name">pt.multicert.felgt.account.tax.form.inherit</field>
+                <field name="model">account.tax</field>
+                <field name="inherit_id" ref="account.view_tax_form" />
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <field name="active" position="after">
+                        <field name="fel_timbre_tax"/>
+                        <field name="fel_tax"/>
+                    </field>
+                </field>
+        </record>
+
+</odoo>

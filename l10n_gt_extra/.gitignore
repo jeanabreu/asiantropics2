@@ -1,0 +1,12 @@
+.idea/encodings.xml
+.idea/l10n_gt_extra.iml
+.idea/misc.xml
+.idea/workspace.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/libraries/R_User_Library.xml
+*.pyc
+.vscode/settings.json
+.VSCodeCounter/*
+.vscode/settings.json
+.vscode/launch.json

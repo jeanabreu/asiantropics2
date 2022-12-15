@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- SUPPLIER -->
+<odoo>
+    <data>
+        <record id="account_invoice_view_payment_slip" model="ir.ui.view">
+            <field name="name">account_invoice_view_payment_slip</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <field name="has_payslip_created" invisible="1" />
+                    <button class="pr-2 mr-2" name="create_payment_slip" string="Crear Contraseña de pago" type="object" attrs="{'invisible': ['|','|','|',('state', '!=', 'posted'), ('payment_state', '!=', 'not_paid'), ('move_type', 'not in', ('out_refund', 'in_invoice', 'in_refund', 'out_receipt', 'in_receipt')), ('has_payslip_created', '=', True)]}" />
+                </xpath>
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_payment_slip" type="object" class="oe_stat_button" icon="fa-file-o" attrs="{'invisible': [('has_payslip_created', '=', False)]}">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">
+                                Contraseña
+                            </span>
+                        </div>
+                    </button>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

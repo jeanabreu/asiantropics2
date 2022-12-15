@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record model="ir.ui.view" id="l10n_gt_extra.l10n_gt_extra_account_journal_form_view_inherit">
+        <field name="name">l10n_gt_extra.l10n_gt_extra_account_journal_form_view_inherit</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form" />
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <field name="type" position="after">
+                <field name="is_receipt_journal" />
+            </field>
+            <field name="code" position="after">
+                <field name="isr_sales_account_id"/>
+                <field name="isr_purchase_account_id"/>
+                <field name="iva_forgiveness_account_id"/>
+                <field name="iva_sales_account_id"/>
+                <field name="iva_purchase_account_id"/>
+            </field>
+            <field name="account_control_ids" position="after">
+                <field name="is_capitalization_journal"/>
+                <field name="capitalization_account_id" attrs="{'invisible': [('is_capitalization_journal', '=', False)]}"/>
+            </field>
+        </field>
+    </record>
+</odoo>

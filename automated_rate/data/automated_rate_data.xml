@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<odoo>
+ 
+   <record id="automated_rate_scheduler" model="ir.cron">
+     <field name="state">code</field>
+     <field name="code">model.get_daily_rate()</field>
+     <field name="interval_type">minutes</field>
+     <field name="model_id" ref="model_banguat_rate" />
+     <field name="user_id" ref="base.user_root" />
+     <field name="name">Automated Rate scheduler</field>
+     <field name="numbercall">-1</field>
+     <field name="priority">5</field>
+     <field name="doall">False</field>
+     <field name="active">True</field>
+     <field name="interval_number">2</field>
+   </record>
+ 
+</odoo>

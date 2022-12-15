@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="invoice_supplier_form_settlement_expenses" model="ir.ui.view">
+            <field name="name">settlement.expenses.invoice.form</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="arch" type="xml">
+                <field name="ref" position="after">
+                    <field name="settlement_expenses_id" domain="[('account_move_id','=',False)]"/>
+                </field>
+            </field>
+        </record>
+
+    </data>
+</odoo>

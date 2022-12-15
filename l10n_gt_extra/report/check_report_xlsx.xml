@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <data>
+               
+                <report
+                        id="report_check"
+                        model="l10n_gt_extra.check_report"
+                        string="Reporte de Cheques"
+                        report_type="xlsx"
+                        name="l10n_gt_extra.check_report_xlsx"
+                        file="Reporte de Cheques"
+                        attachment_use="False"
+                />
+
+        </data>
+</odoo>

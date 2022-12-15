@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_electronic_payment">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page" style="font-family:'Lucida Sans Unicode', 'Lucida Grande', sans-serif">
+                    <div class="text-center" style="font-size:12px; margin-top:10px;">
+                        <p>DEPARTAMENTO DE CONTABILIDAD
+                            SOLICITUD,  AUTORIZACION Y  PAGO DE DOCUMENTOS
+                        </p>
+                    </div>
+                    <div class="text-center" style="font-size:16px; margin-top:10px;">
+                        <strong>NOTA DE DÉBITO No.</strong>
+                    </div>
+                    <div>
+                        <table class="table table-sm table-bordered">
+                            <tbody>
+                            <tr>
+                                <td>Fecha de solicitud</td>
+                                <td><strong><span t-esc="request_date"/></strong></td>
+                            </tr>
+                            <tr>
+                                <td>Nombre del Proveedor</td>
+                                <td><strong><span t-esc="data['partner_id'][1]"/></strong></td>
+                            </tr>
+                            <tr>
+                                <td>Concepto del Pago</td>
+                                <td><strong><span t-esc="data['payment_concept']"/></strong></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <table class="table table-sm table-bordered">
+                            <tbody>
+                            <tr>
+                                <td>Código de Proveedor</td>
+                                <td><strong>NIT</strong></td>
+                                <td>No. de Cuenta</td>
+                                <td><strong><span t-esc="data['bank_account_id'][1]"/></strong></td>
+                            </tr>
+                            <tr>
+                                <td>NIT de Proveedor</td>
+                                <td><strong><span t-esc="vat_partner"/></strong></td>
+                                <td>Fecha de Pago Programada</td>
+                                <td><strong><span t-esc="payment_date"/></strong></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="row text-center" style="margin-top: 25px;">
+                        <div class="col-3" style="border-left: 2px solid; border-top: 2px solid; border-bottom: 2px solid;">
+                            <strong>NÚMERO</strong>
+                        </div>
+                        <div class="col-3" style="border-left: 2px solid; border-top: 2px solid; border-bottom: 2px solid;">
+                            <strong>FECHA</strong>
+                        </div>
+                        <div class="col-3" style="border-left: 2px solid; border-top: 2px solid; border-bottom: 2px solid;">
+                            <strong>VALOR</strong>
+                        </div>
+                        <div class="col-3" style="border-left: 2px solid; border-top: 2px solid; border-bottom: 2px solid; border-right: 2px solid;">
+                            <strong>CENTRO DE COSTO</strong>
+                        </div>
+                    </div>
+                    <t t-set="subtotal" t-value="0"/>
+                    <t t-set="isr_total" t-value="0"/>
+                    <t t-set="total" t-value="0"/>
+                    <t t-foreach="lines" t-as="line">
+                        <div class="row">
+                            <div class="col-3 text-center">
+                                <span t-esc="line['name']"/>
+                            </div>
+                            <div class="col-3 text-center">
+                                <span t-esc="line['invoice_date']"/>
+                            </div>
+                            <div class="col-3 text-right">
+                                <span t-esc="line['amount']" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                            </div>
+                            <div class="col-3 text-center">
+                                <span t-esc="line['analytic_account']"/>
+                            </div>
+                            <t t-set="subtotal" t-value="subtotal + line['amount']"/>
+                            <t t-set="isr_total" t-value="isr_total + line['isr']"/>
+                        </div>
+                    </t>
+                    <div class="row" style="margin-top: 30px;">
+                        <div class="col-3"></div>
+                        <div class="col-3" style="border-top: 2px solid; border-left: 2px solid; border-bottom: 1px solid;">
+                            Sub Total
+                        </div>
+                        <div class="col-3 text-right" style="border-top: 2px solid; border-right: 2px solid; border-bottom: 1px solid; border-left: 2px solid;">
+                            <strong><span t-esc="subtotal" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/></strong>
+                        </div>
+                        <div class="col-3"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-3"></div>
+                        <div class="col-3" style="border-left: 2px solid; border-bottom: 1px solid;">
+                            (-) Retención de I.S.R.
+                        </div>
+                        <div class="col-3 text-right" style="border-right: 2px solid; border-bottom: 1px solid; border-left: 2px solid;">
+                            <strong><span t-esc="isr_total" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/></strong>
+                        </div>
+                        <div class="col-3"></div>
+                    </div>
+                    <div class="row">
+                        <div class="col-3"></div>
+                        <div class="col-3" style="border-left: 2px solid; border-bottom: 2px solid;">
+                            (-) Nota de Crédito
+                        </div>
+                        <div class="col-3 text-right" style="border-right: 2px solid; border-bottom: 2px solid; border-left: 2px solid;">
+                            <strong><span t-esc="total_credit_notes" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/></strong>
+                        </div>
+                        <div class="col-3"></div>
+                    </div>
+                    <t t-set="total" t-value="subtotal - isr_total - total_credit_notes"/>
+                    <div class="row">
+                        <div class="col-3"></div>
+                        <div class="col-3 text-right" style="border-left: 2px solid; border-bottom: 2px solid;">
+                            <strong>MONTO DEL PAGO</strong>
+                        </div>
+                        <div class="col-3 text-right" style="border-right: 2px solid; border-bottom: 2px solid; border-left: 2px solid;">
+                            <strong><span t-esc="total" t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/></strong>
+                        </div>
+                        <div class="col-3"></div>
+                    </div>
+                    <div style="page-break-inside: avoid;">
+                        <br/>
+                        <br/>
+                        <div class="row" style="margin-top: 50px;">
+                            <div class="col-3" style="border-bottom: 1px solid;"></div>
+                            <div class="col-3"></div>
+                            <div class="col-3"></div>
+                            <div class="col-3" style="border-bottom: 1px solid;"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-3 text-center">
+                                Cuentas por Pagar
+                            </div>
+                            <div class="col-3"></div>
+                            <div class="col-3"></div>
+                            <div class="col-3 text-center">
+                                Contador General
+                            </div>
+                        </div>
+                        <br/>
+                        <br/>
+                        <div class="row" style="margin-top: 50px;">
+                            <div class="col-3" style="border-bottom: 1px solid;"></div>
+                            <div class="col-3"></div>
+                            <div class="col-3"></div>
+                            <div class="col-3" style="border-bottom: 1px solid;"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-3 text-center">
+                                Gerente Financiero
+                            </div>
+                            <div class="col-3"></div>
+                            <div class="col-3"></div>
+                            <div class="col-3 text-center">
+                                Gerente General
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

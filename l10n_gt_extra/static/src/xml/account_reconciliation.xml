@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates>
+
+    <t t-extend="reconciliation.line.mv_line">
+        <t t-jquery=".cell_due_date" t-operation="after">
+            <td class="cell_due_date">
+                <t t-if="line.bank_operation_ref">
+                    <span class="font-weight-bold" t-esc="line.bank_operation_ref"/>
+                </t>
+            </td>
+        </t>
+    </t>
+    
+    <t t-extend="reconciliation.line">
+        <t t-jquery=".cell_due_date" t-operation="after">
+            <td class="cell_due_date">
+                <t t-if="state.st_line.bank_operation_ref">
+                    <t t-esc="state.st_line.bank_operation_ref"/>
+                </t>
+            </td>
+        </t>
+    </t>
+
+
+    <t t-extend="reconciliation">
+        <t t-jquery=".o_form_view" t-operation="replace">
+            <div class="o_form_view">
+                <t t-set="state_widget" t-value="widget._initialState"/>
+                <div class="o_form_statusbar" >
+                    <div class="o_statusbar_buttons">
+                        
+                        <button t-attf-class="btn btn-primary validate_all_lines" accesskey="">CONCILIAR TODO</button>
+                    </div>
+                </div>
+                <div class="o_form_sheet_bg">
+                    <div class="o_form_sheet"/>
+                </div>
+            </div>    
+        </t>
+    </t>
+</templates>
+

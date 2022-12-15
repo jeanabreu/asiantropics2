@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="sequence_payment_slip" model="ir.sequence">
+            <field name="name">Payment slip sequence</field>
+            <field name="code">pt_payment_slip.payment_slip</field>
+            <field name="prefix">CP</field>
+            <field eval="1" name="number_next"/>
+            <field eval="1" name="number_increment"/>
+            <field eval="False" name="company_id"/>
+            <field name="padding">7</field>
+        </record>
+    </data>
+</odoo>

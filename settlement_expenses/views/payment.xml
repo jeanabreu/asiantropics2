@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+         <record model="ir.ui.view" id="view_account_payment_form_settlement_expenses">
+            <field name="name">account.payment.payment.form.settlement.expenses</field>
+            <field name="model">account.payment</field>
+            <field name="inherit_id" ref="account.view_account_payment_form"/>
+            <field name="arch" type="xml">
+                <field name="date" position="after">
+                    <field name="settlement_expenses_id" attrs="{'invisible':[('payment_type','!=','outbound')]}" domain="[('account_move_id','=',False)]"/>
+                </field>
+            </field>
+        </record>
+
+    </data>
+</odoo>

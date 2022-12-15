@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record model="ir.ui.view" id="pt_multicert_felgt.pt_mutlicert_felgt_res_company_form_view_inherit">
+        <field name="name">pt_multicert_felgt.muticert.felgt.res.company.form.inherit</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form" />
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <field name="website" position="after">
+                <field name="fel_company_configuration"/>
+                <field name="fel_company_type" attrs="{'invisible':[('fel_company_configuration','!=', True)]}"/>
+                <field name="fel_company_code" attrs="{'invisible':[('fel_company_configuration','!=', True)]}"/>
+                <field name="fel_iva_company_exception"/>
+                <field name="fel_resolution_date"/>
+                <field name="fel_resolution_number"/>
+                <field name="fel_establishment_code" />
+                <field name="consignatary_code" />
+                <field name="exporter_code" />
+            </field>
+        </field>
+    </record>
+
+    <record id="api_logger_list_view" model="ir.ui.view">
+        <field name="name">api.logger.list.view</field>
+        <field name="model">pt_multicert_felgt.infile_xml_sent</field>
+        <field name="arch" type="xml">
+            <tree default_order="create_date desc">
+                <field name="name"/>
+                <field name="create_date" />
+
+            </tree>
+        </field>
+    </record>
+
+    <record id="api_logger_form_view" model="ir.ui.view">
+        <field name="name">api.logger.form.view</field>
+        <field name="model">pt_multicert_felgt.infile_xml_sent</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="name"/>
+                </group>
+                <group>
+                    <field name="data_content"/>
+                </group>
+                <group>
+                    <field name="api_sent"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_api_logger" model="ir.actions.act_window">
+        <field name="name">FEL Logger</field>
+        <field name="res_model">pt_multicert_felgt.infile_xml_sent</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="api_logger_menu" name="Infile Logger" action="action_api_logger" parent="base.menu_users" groups="pt_multicert_felgt.infile_felgt_group_manager" />
+
+
+    <record id="api_logger_list_view" model="ir.ui.view">
+        <field name="name">api.logger.list.view</field>
+        <field name="model">pt_multicert_felgt.guatefacturas_xml_sent</field>
+        <field name="arch" type="xml">
+            <tree default_order="create_date desc">
+                <field name="name"/>
+                <field name="create_date" />
+
+            </tree>
+        </field>
+    </record>
+
+    <record id="api_logger_form_view" model="ir.ui.view">
+        <field name="name">api.logger.form.view</field>
+        <field name="model">pt_multicert_felgt.guatefacturas_xml_sent</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="name"/>
+                </group>
+                <group>
+                    <field name="data_content"/>
+                </group>
+                <group>
+                    <field name="api_sent"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="guatefacturas_action_api_logger" model="ir.actions.act_window">
+        <field name="name">FEL Logger</field>
+        <field name="res_model">pt_multicert_felgt.guatefacturas_xml_sent</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="guatefacturas_logger_menu" name="Guatefacturas Logger" action="guatefacturas_action_api_logger" parent="base.menu_users" groups="pt_multicert_felgt.guatefacturas_felgt_group_manager" />
+
+
+    <record id="api_logger_list_view" model="ir.ui.view">
+        <field name="name">api.logger.list.view</field>
+        <field name="model">pt_multicert_felgt.digifact_xml_sent</field>
+        <field name="arch" type="xml">
+            <tree default_order="create_date desc">
+                <field name="name"/>
+                <field name="create_date" />
+
+            </tree>
+        </field>
+    </record>
+
+    <record id="api_logger_form_view" model="ir.ui.view">
+        <field name="name">api.logger.form.view</field>
+        <field name="model">pt_multicert_felgt.digifact_xml_sent</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="name"/>
+                </group>
+                <group>
+                    <field name="xml_content"/>
+                </group>
+                <group>
+                    <field name="api_sent"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="digifact_action_api_logger" model="ir.actions.act_window">
+        <field name="name">FEL Logger</field>
+        <field name="res_model">pt_multicert_felgt.digifact_xml_sent</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="digifact_logger_menu" name="Digifact Logger" action="digifact_action_api_logger" parent="base.menu_users" groups="pt_multicert_felgt.digifact_felgt_group_manager" />
+
+    <record id="api_logger_list_view" model="ir.ui.view">
+        <field name="name">api.logger.list.view</field>
+        <field name="model">pt_multicert_felgt.forcon_xml_sent</field>
+        <field name="arch" type="xml">
+            <tree default_order="create_date desc">
+                <field name="name"/>
+                <field name="create_date" />
+
+            </tree>
+        </field>
+    </record>
+
+    <record id="api_logger_form_view" model="ir.ui.view">
+        <field name="name">api.logger.form.view</field>
+        <field name="model">pt_multicert_felgt.forcon_xml_sent</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="name"/>
+                </group>
+                <group>
+                    <field name="data_content"/>
+                </group>
+                <group>
+                    <field name="api_sent"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="forcon_action_api_logger" model="ir.actions.act_window">
+        <field name="name">FEL Logger</field>
+        <field name="res_model">pt_multicert_felgt.forcon_xml_sent</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="forcon_logger_menu" name="Forcon Logger" action="forcon_action_api_logger" parent="base.menu_users" groups="pt_multicert_felgt.forcon_felgt_group_manager" />
+
+    <record id="api_g4s_logger_list_view" model="ir.ui.view">
+        <field name="name">api.g4s.logger.list.view</field>
+        <field name="model">pt_multicert_felgt.g4s_xml_sent</field>
+        <field name="arch" type="xml">
+            <tree default_order='create_date desc'>
+                <field name="name"/>
+                <field name="create_date" string="Enviando en" />
+
+            </tree>
+        </field>
+    </record>
+
+    <record id="api_g4s_logger_form_view" model="ir.ui.view">
+        <field name="name">api.g4s.logger.form.view</field>
+        <field name="model">pt_multicert_felgt.g4s_xml_sent</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <field name="name"/>
+                </group>
+                <group>
+                    <field name="data_content"/>
+                </group>
+                <group>
+                    <field name="api_sent"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_api_g4s_logger" model="ir.actions.act_window">
+        <field name="name">G4S FEL Logger</field>
+        <field name="res_model">pt_multicert_felgt.g4s_xml_sent</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="api_g4s_logger_menu" name="G4S Logger" action="action_api_g4s_logger" parent="base.menu_users" groups="pt_multicert_felgt.g4s_felgt_group_manager" />
+</odoo>

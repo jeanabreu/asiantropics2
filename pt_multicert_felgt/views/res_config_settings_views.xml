@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="aspl_security_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]//div[@data-key='account']" position="inside">
+                <div id="multicert_certifier_selector" groups="account.group_account_manager">
+                    <h2>Facturación Electrónica</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-xs-12 col-md-12 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="fel_certifier" />
+                                <span title="Usuario Infile" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="fel_certifier" class="" required="1" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Seleccione el certificador a utilizar
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="fel_currency_from_invoice" />
+                                <span title="Usuario Infile" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="fel_currency_from_invoice" class="" required="1" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Seleccione si la moneda en que sera emitida la factura electrónica será en base a la moneda seleccionada en la factura
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_setting_right_pane" attrs="{'invisible': [('fel_currency_from_invoice', '=', True)]}">
+                                <label for="fel_invoice_currency" />
+                                <span title="Usuario Infile" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="fel_invoice_currency" class="" attrs="{'required': [('fel_currency_from_invoice', '=', False)]}"  />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Seleccione la moneda en que sera emitida la factura
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="fel_addendum_currency_rate" />
+                                <span title="Tasa de cambio" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="fel_addendum_currency_rate" class="" required="1" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Marque si desea agregar la tasa del dia facturado a las adendas
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="fel_addendum_journal_sequence" />
+                                <span title="Tasa de cambio" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="fel_addendum_journal_sequence" class="" required="1" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Marque si desea agregar el correlativo del diario a las adendas
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="fel_default_code_divider" />
+                                <span title="Separador" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="fel_default_code_divider" class=""  />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese el caracter(es) que se utilizara para separar la referencia interna del nombre del producto
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="fel_invoice_line_name" />
+                                <span title="Linea factura" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="fel_invoice_line_name" class="" required="1" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Seleccione de donde se tomara la descripción de la línea de factura.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="infile_felgt_credentials" data-string="Credenciales" string="Credenciales" groups="pt_multicert_felgt.infile_felgt_group_manager" attrs="{'invisible': [('fel_certifier', '!=', 'infile')]}">
+                    <h2>InFile</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-xs-12 col-md-12 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="infile_user" />
+                                <span title="Usuario INFILE" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="infile_user" class="" attrs="{'required': [('fel_certifier', '=', 'infile')]}"  />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese el usuario proporcionado por INFILE.
+                                    </div>
+                                </div>
+                                <label for="infile_xml_key_signature" />
+                                <span title="Llave para firma" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="infile_xml_key_signature" class="" attrs="{'required': [('fel_certifier', '=', 'infile')]}"  />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la llave para la firma.
+                                    </div>
+                                </div>
+                                <label for="infile_xml_url_signature" />
+                                <span title="URL para firma" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="infile_xml_url_signature" class="" attrs="{'required': [('fel_certifier', '=', 'infile')]}"  />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la URL para la firma.
+                                    </div>
+                                </div>
+                                <label for="infile_key_certificate" />
+                                <span title="Llave para cerificacion" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="infile_key_certificate" class="" attrs="{'required': [('fel_certifier', '=', 'infile')]}"  />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la llave para la certificación.
+                                    </div>
+                                </div>
+                                <label for="infile_url_certificate" />
+                                <span title="URL para cerificacion" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="infile_url_certificate" class="" attrs="{'required': [('fel_certifier', '=', 'infile')]}"  />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la URL para la certificación.
+                                    </div>
+                                </div>
+                                <label for="infile_url_anulation" />
+                                <span title="URL para anulacion" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="infile_url_anulation" class="" attrs="{'required': [('fel_certifier', '=', 'infile')]}"  />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la URL para la anulación de facturas.
+                                    </div>
+                                </div>
+                                <label for="fel_establishment_code" />
+                                <span title="Código del establecimiento" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="fel_establishment_code" class="" attrs="{'required': [('fel_certifier', '=', 'infile')]}"  />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese el código del establecimiento.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="forcon_felgt_credentials" data-string="Credenciales" string="Credenciales" groups="pt_multicert_felgt.forcon_felgt_group_manager" attrs="{'invisible': [('fel_certifier', '!=', 'forcon')]}">
+                    <h2>FORCON</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-xs-12 col-md-12 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="forcon_user" />
+                                <span title="Usuario FORCON" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="forcon_user" class="" attrs="{'required': [('fel_certifier', '=', 'forcon')]}" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese el usuario proporcionado por FORCON.
+                                    </div>
+                                </div>
+                                <label for="forcon_password" />
+                                <span title="Contraseña" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="forcon_password" class="" attrs="{'required': [('fel_certifier', '=', 'forcon')]}"  password="True"/>
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la contraseña.
+                                    </div>
+                                </div>
+                                <label for="fel_establishment_code" />
+                                <span title="Código del establecimiento" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="fel_establishment_code" class="" attrs="{'required': [('fel_certifier', '=', 'forcon')]}" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese el código del establecimiento.
+                                    </div>
+                                </div>
+                                <label for="forcon_url_dev" />
+                                <span title="URLS" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="forcon_url_dev" class="" attrs="{'required': [('fel_certifier', '=', 'forcon')]}" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                            Ingrese la url de generación de FEL para ambiente de pruebas.
+                                    </div>
+                                </div>
+
+                                <label for="forcon_url_prod" />
+                                <span title="URLS" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="forcon_url_prod" class="" attrs="{'required': [('fel_certifier', '=', 'forcon')]}" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                                Ingrese la url de generación de FEL para ambiente de producción.
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="digifact_felgt_credentials" data-string="Credenciales" string="Credenciales" data-key="account" groups="pt_multicert_felgt.digifact_felgt_group_manager" attrs="{'invisible': [('fel_certifier', '!=', 'digifact')]}">
+                    <h2>Digifact</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-xs-12 col-md-12 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="digifact_username" />
+                                <span title="Usuario DIGIFACT" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="digifact_username" class="" attrs="{'required': [('fel_certifier', '=', 'digifact')]}" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese el usuario proporcionado por DIGIFACT.
+                                    </div>
+                                </div>
+                                <label for="digifact_password" />
+                                <span title="Contraseña DIGIFACT" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="digifact_password" class="" attrs="{'required': [('fel_certifier', '=', 'digifact')]}" password="True" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la contraseña proporcionado por DIGIFACT.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-6 col-md-6 o_setting_box">
+                            <h4>PRUEBAS</h4>
+                            <div class="o_setting_left_pane"></div>
+                            <div class="o_setting_right_pane">
+                                <label for="digifact_api_dev_login" />
+                                <span title="URLS" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="digifact_api_dev_login" class="" attrs="{'required': [('fel_certifier', '=', 'digifact')]}" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la url de login para ambiente de pruebas.
+                                    </div>
+                                </div>
+                                <label for="digifact_api_dev_certificate" />
+                                <span title="URLS" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="digifact_api_dev_certificate" class="" attrs="{'required': [('fel_certifier', '=', 'digifact')]}" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la url de generación de FEL para ambiente de pruebas.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xs-6 col-md-6 o_setting_box">
+                            <h4>PRODUCCION</h4>
+                            <div class="o_setting_left_pane"></div>
+                            <div class="o_setting_right_pane">
+                                <label for="digifact_api_prod_login" />
+                                <span title="URLS" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="digifact_api_prod_login" class="" attrs="{'required': [('fel_certifier', '=', 'digifact')]}" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la url de login para ambiente de producción.
+                                    </div>
+                                </div>
+                                <label for="digifact_api_prod_certificate" />
+                                <span title="URLS" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="digifact_api_prod_certificate" class="" attrs="{'required': [('fel_certifier', '=', 'digifact')]}" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la url de generación de FEL para ambiente de producción.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="g4s_felgt_credentials" data-string="Credenciales" string="Credenciales" data-key="account" groups="pt_multicert_felgt.g4s_felgt_group_manager" attrs="{'invisible': [('fel_certifier', '!=', 'g4s')]}">
+                    <h2>G4S</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-xs-12 col-md-12 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="requestor_id" />
+                                <span title="Requestor" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="requestor_id" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese el Requestor ID.
+                                    </div>
+                                </div>
+                                <label for="g4s_username" />
+                                <span title="Usuario" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="g4s_username" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese el usuario.
+                                    </div>
+                                </div>
+                                <label for="g4s_environment" />
+                                <span title="Ambiente" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="g4s_environment" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Seleccione el ambiente a utilizar.
+                                    </div>
+                                </div>
+                                <label for="g4s_dev_url" />
+                                <span title="URL Pruebas" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="g4s_dev_url" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la URL de pruebas.
+                                    </div>
+                                </div>
+                                <label for="g4s_prod_url" />
+                                <span title="URL Producción" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="g4s_prod_url" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la URL de producción.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="guatefacturas_felgt_credentials" data-string="Credenciales" string="Credenciales" data-key="account" groups="pt_multicert_felgt.guatefacturas_felgt_group_manager" attrs="{'invisible': [('fel_certifier', '!=', 'guatefacturas')]}">
+                    <h2>Guatefacturas</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-xs-12 col-md-12 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="guatefacturas_soap_username" />
+                                <span title="Usuario SOAP" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="guatefacturas_soap_username" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese el usuario de autenticación SOAP.
+                                    </div>
+                                </div>
+                                <label for="guatefacturas_soap_password" />
+                                <span title="Contraseña SOAP" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="guatefacturas_soap_password" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la contraseña de autenticación SOAP.
+                                    </div>
+                                </div>
+                                <label for="guatefacturas_username" />
+                                <span title="Usuario" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="guatefacturas_username" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese el usuario.
+                                    </div>
+                                </div>
+                                <label for="guatefacturas_password" />
+                                <span title="Contraseña" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="guatefacturas_password" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la contraseña.
+                                    </div>
+                                </div>
+                                <label for="fel_establishment_code" />
+                                <span title="Código del establecimiento" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="fel_establishment_code" class="" attrs="{'required': [('fel_certifier', '=', 'guatefacturas')]}"  />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese el código del establecimiento.
+                                    </div>
+                                </div>
+                                <label for="guatefacturas_url_dev" />
+                                <span title="URL Pruebas" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="guatefacturas_url_dev" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la URL de pruebas.
+                                    </div>
+                                </div>
+                                <label for="guatefacturas_url_prod" />
+                                <span title="URL Producción" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="guatefacturas_url_prod" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese la URL de producción.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+
+    </record>
+</odoo>

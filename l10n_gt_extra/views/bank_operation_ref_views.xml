@@ -1,0 +1,45 @@
+<odoo>
+  <data>
+
+        <record model="ir.ui.view" id="l10n_gt_extra_bank_operation_ref_form_view">
+            <field name="name">Bank references form</field>
+            <field name="model">l10n_gt_extra.bank_operation_ref</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name" required="1"/>
+                            <field name="payment_id" required="0" attrs="{'invisible': [('payment_id','=',False)]}"/>
+                            <field name="journal_id" required="1" options="{'no_create': True}"/>
+                            <field name="type_document" required="1" options="{'no_create': True}"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="l10n_gt_extra_bank_operation_ref_tree" model="ir.ui.view">
+            <field name="name">Bank references tree</field>
+            <field name="model">l10n_gt_extra.bank_operation_ref</field>
+            <field name="arch" type="xml">
+                <tree string="Referencias Bancarias">
+                    <field name="name" required="1"/>
+                    <field name="payment_id"/>
+                    <field name="journal_id" options="{'no_create': True}" required="1"/>
+                    <field name="type_document" options="{'no_create': True}" required="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="l10n_gt_extra_bank_operation_ref_action">
+            <field name="name">Bank references</field>
+            <field name="res_model">l10n_gt_extra.bank_operation_ref</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="l10n_gt_extra_bank_operation_ref_tree" />
+        </record>
+
+        <menuitem id="menu_bank_operation_ref" name="Referencias Bancarias" parent="account.menu_finance_receivables" action="l10n_gt_extra_bank_operation_ref_action"/>
+
+
+  </data>
+</odoo>

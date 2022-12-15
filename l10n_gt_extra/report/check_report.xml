@@ -1,0 +1,38 @@
+<odoo>
+  <data>
+    <record id="check_report_view_form" model="ir.ui.view">
+      <field name="name">l10n_gt_extra.check_report</field>
+      <field name="model">l10n_gt_extra.check_report</field>
+      <field name="arch" type="xml">
+        <form string="Reporte de Cheques">
+          <sheet>
+          <div class="oe_title">
+            <h1>Reporte de Cheques</h1>
+          </div>
+          <group>
+            <field name="journal_id" widget="many2many_tags" options="{'no_create': True}"/>
+            <field name="date_from"/>
+            <field name="date_to"/>
+          </group>
+          </sheet>
+          <footer>
+            <button icon="fa-paste" string='Generar Reporte' name="%(report_check)d" type="action" class="btn-primary"/>
+            <button string="Cancel" class="btn-default" special="cancel"/>
+          </footer>
+            </form>
+        </field>
+    </record>
+
+    <act_window id="window_check_report" name="Reporte de Cheques" res_model="l10n_gt_extra.check_report" view_mode="form" target="new"/>
+
+    <menuitem 
+      sequence="11" 
+      name="Reporte de Cheques"
+      action="window_check_report" 
+      id="menu_check_report" 
+      parent="account.menu_finance_reports" 
+      groups="base.group_user"/>
+
+  </data>
+</odoo>
+

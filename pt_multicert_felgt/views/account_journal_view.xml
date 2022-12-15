@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record model="ir.ui.view" id="pt_multicert_felgt.pt_multicert_felgt_account_journal_form_view_inherit">
+        <field name="name">pt_multicert_felgt.pt_multicert_felgt_account_journal_form_view_inherit</field>
+        <field name="model">account.journal</field>
+        <field name="inherit_id" ref="account.view_account_journal_form" />
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <field name="type" position="after">
+                <field name="fel_certifier" invisible="1" />
+                <field name="is_fel" attrs="{'invisible': [('fel_certifier', '!=', 'digifact')]}" />
+                <field name="infile_fel_active" attrs="{'invisible': [('fel_certifier', '!=', 'infile')]}" />
+                <field name="forcon_fel_active" attrs="{'invisible': [('fel_certifier', '!=', 'forcon')]}" />
+                <field name="forcon_fel" attrs="{'invisible': [('fel_certifier', '!=', 'forcon')]}" />
+                <field name="g4s_fel_active" attrs="{'invisible': [('fel_certifier', '!=', 'g4s')]}" />
+                <field name="guatefacturas_fel" attrs="{'invisible': [('fel_certifier', '!=', 'guatefacturas')]}" />
+                <field name="fel_establishment_code"/>
+            </field>
+            <xpath expr="//page[@name='advanced_settings']" position="inside">
+                <group sting="Datos de facturación FEL">
+                    <field name="fel_commercial_name"/>
+                    <field name="fel_address"/>
+                    <field name="fel_zip_code"/>
+                    <field name="fel_department"/>
+                    <field name="fel_township"/>
+                </group>
+                
+            </xpath>
+        </field>
+    </record>
+</odoo>

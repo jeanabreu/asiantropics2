@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_pt_payment_slip_slip_config_user,pt_payment_slip.slip_config,model_pt_payment_slip_slip_config,account.group_account_invoice,1,1,1,1
+access_pt_payment_slip_payment_send_user,pt_payment_slip.payment_send,model_pt_payment_slip_payment_send,account.group_account_invoice,1,1,1,1

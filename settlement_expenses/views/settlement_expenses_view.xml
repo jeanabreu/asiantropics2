@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- <template id="settlement_expenses_assets" name="settlement_expenses_assets" inherit_id="web.assets_backend">
+            <xpath expr="." position="inside">
+                <link rel="stylesheet" type="text/css" href="/settlement_expenses/static/src/css/settlement_expenses.css"/>
+            </xpath>
+        </template> -->
+
+        <record id="view_settlement_expenses_form" model="ir.ui.view">
+            <field name="name">settlement.expenses.form</field>
+            <field name="model">settlement_expenses</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="liquidación">
+                    <header>
+                        <button name="conciliar" string="Conciliar" type="object" attrs="{'invisible':[('account_move_id', '!=', False)]}"/>
+                        <button name="cancelar" string="Cancelar" type="object" attrs="{'invisible':[('account_move_id', '=', False)]}" />
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="journal_id"/>
+                            </group>
+                            <group>
+                                <field name="settlement_date"/>
+                                <field name="employee_id"/>
+                                <field name="company_id"/>
+                            </group>
+                        </group>
+                        <field name="invoice_id" readonly="True">
+                            <tree string="Detalle de facturas">
+                                <field name="name"/>
+                                <field name="invoice_date" string="Fecha" />
+                                <field name="journal_id"/>
+                                <field name="state"/>
+                                <field name="amount_residual"/>
+                                <field name="currency_id"/>
+                                <field name="amount_total" string="Total moneda"/>
+                                <field name="amount_total_signed" string="Total" />
+                            </tree>
+                        </field>
+                        <field name="payment_id" readonly="True">
+                            <tree string="Detalle de pagos">
+                                <field name="name"/>
+                                <field name="date"/>
+                                <field name="journal_id"/>
+                                <field name="state"/>
+                                <field name="payment_method_id"/>
+                                <field name="partner_id"/>
+                                <field name="currency_id"/>
+                                <field name="amount" string="Total"/>
+                            </tree>
+                        </field>
+                        <group class="totals-details">
+                            <group></group>
+                            <group class="text-right font-weight-bold" string="Totales (Q)" >
+                                <field name="payment_total" />
+                                <field name="invoice_total" />
+                                <separator/>
+                                <field name="final_balance" />
+                            </group>
+                        </group>
+                        <group >
+                            <group>
+                                <field name="adjustment_journal_id"/>
+                            </group>
+                            <group>
+                                <field name="account_move_id" readonly="True"/>
+                            </group>
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
+                        <field name="activity_ids" widget="mail_activity"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_settlement_expenses_settlement_expenses_tree" model="ir.ui.view">
+            <field name="name">settlement_expenses.tree</field>
+            <field name="model">settlement_expenses</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="liquidación">
+                    <field name="settlement_date"/>
+                    <field name="name"/>
+                    <field name="account_move_id"/>
+                    <field name="employee_id"/>
+                    <field name="company_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_settlement_expenses_settlement_expenses" model="ir.actions.act_window">
+            <field name="name">Liquidaciones</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">settlement_expenses</field>
+        </record>
+
+        <menuitem action="action_settlement_expenses_settlement_expenses" id="menu_settlement_settlement_settlement_expenses" parent="account.menu_finance_payables"/>
+
+    </data>
+</odoo>

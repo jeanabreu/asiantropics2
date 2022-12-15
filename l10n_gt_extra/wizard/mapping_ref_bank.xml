@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <record id="mapping_refs_banks_view_form" model="ir.ui.view">
+            <field name="name">Mapping Bank References</field>
+            <field name="model">l10n_gt_extra.mapping_refs_bank</field>
+            <field name="arch" type="xml">
+                <form string="Mapeo de Referencias Bancarias">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="count_payment" invisible="1"/>
+                            </group>
+                            <group>
+                                <field name="count_mapping"/>
+                            </group>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button icon="fa-paste" string='Validar Pagos no Mapeados' name="payment_to_mapping" type="object" class="btn-primary"/>
+                        <button icon="fa-paste" string='Mapear' name="mapping_refs_bank" type="object" class="btn-primary"/>
+                        <button string="Salir" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <act_window id="window_mapping_ref_bank" name="Mapping Bank References" res_model="l10n_gt_extra.mapping_refs_bank" view_mode="form" target="new"/>
+
+        <menuitem id="menu_bank_ref" name="Mapear Referencias Bancarias" parent="account.menu_finance_receivables" action="window_mapping_ref_bank" groups="base.group_system"/>
+
+
+</odoo>

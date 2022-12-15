@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="pt_payment_slip_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]//div[@data-key='account']" position="inside">
+                <div id="pt_payment_slip_selector" groups="account.group_account_manager">
+                    <h2>Contraseñas de pago</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-xs-12 col-md-12 o_setting_box">
+                            <div class="o_setting_right_pane">                                
+                                <span title="Detalles de pago" role="" aria-label="" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        
+                                        <field name="payment_slip_detail_line_1" class="" /><br/>
+                                        
+                                        <field name="payment_slip_detail_line_2" class="" /><br/>
+                                        
+                                        <field name="payment_slip_detail_line_3" class="" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Ingrese los detalles de pago a proveedores a mostrar en el reporte de contraseñas de pago
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+
+    </record>
+</odoo>

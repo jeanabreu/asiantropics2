@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="reporte_ventas">
+        <t t-call="web.html_container">
+            <t t-set="data_report_page_offset" t-value="data['folio_inicial']-1"/>
+            <div class="header">
+                <div class="row" style="font-size: 12px !important;">
+                    <div class="col-2">
+                      <img t-if="company_id.logo" t-att-src="image_data_uri(company_id.logo)" style="max-height: 90px; margin-right: 20px" alt="Logo"/>
+                    </div>
+                    <div class="col-2">
+                        <div class="text-right">
+                            <div>
+                                <strong>Nombre Comercial:</strong>
+                            </div>
+                            <div>
+                                <strong>Nombre Fiscal:</strong>
+                            </div>
+                            <div>
+                                <strong>NIT:</strong>
+                            </div>
+                            <div>
+                                <strong>Dirección:</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-left">
+                            <div class="ml-3 pl-3">
+                                <span t-esc="company_id.name" />
+                            </div>
+                            <div class="ml-3 pl-3">
+                                <span t-esc="company_id.company_registry" />
+                            </div>
+                            <div class="ml-3 pl-3">
+                                <div t-if="company_id.vat != False">
+                                    <span t-esc="company_id.vat"/>
+                                </div>
+                                <div t-if="company_id.vat == False">
+                                    -----
+                                </div>
+                            </div>
+                            <div class="ml-3 pl-3">
+                                <span t-esc="company_id.street"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="text-right">
+                            <div>
+                                <strong>Folio:</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <t t-set="folio_inicial" t-value="data['folio_inicial']-1"/>
+                        <div class="text-left">
+                             <script>
+                                function subst() {
+                                    var fo = '<t t-esc="folio_inicial"/>';
+                                    var folio = parseInt(fo)
+                                    var vars = {};
+                                    var x = document.location.search.substring(1).split('&amp;');
+                                    for (var i in x) {
+                                        var z = x[i].split('=', 2);
+                                        vars[z[0]] = unescape(z[1]);
+                                    }
+                                    var x = ['sitepage', 'sitepages', 'section', 'subsection', 'subsubsection'];
+                                    var z = {'sitepage': 'page', 'sitepages': 'topage'};
+                                    for (var i in x) {
+                                        var y = document.getElementsByClassName(z[x[i]] || x[i])
+                                        for (var j=0; j&lt;y.length; ++j)
+                                            y[j].textContent = parseInt(vars[x[i]]) + folio;
+                                    }
+        
+                                    var index = vars['webpage'].split('.', 4)[3];
+                                    var header = document.getElementById('minimal_layout_report_headers');
+                                    if(header !== null){
+                                        var companyHeader = header.children[index];
+                                        header.textContent = '';
+                                        header.appendChild(companyHeader);
+                                    }
+                                    var footer = document.getElementById('minimal_layout_report_footers');
+                                    if(footer !== null){
+                                        var companyFooter = footer.children[index];
+                                        footer.textContent = '';
+                                        footer.appendChild(companyFooter);
+                                    }
+                                }
+                            </script>
+                            <div>
+                                <span class="page"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center pt-3">
+                    <h3>Registro de Libro de Ventas y Servicios</h3>
+                </div>
+
+                <div class="col-10">
+                    <strong>Registro del: </strong>
+                    <span t-esc="data['fecha_desde']" t-options='{"widget": "date"}'/>
+                    al:
+                    <span t-esc="data['fecha_hasta']" t-options='{"widget": "date"}'/>
+                    <br/>
+                </div>
+
+            </div>
+            <t t-call="web.external_layout">
+                <div class="page" style="font-family:'Lucida Sans Unicode', 'Lucida Grande', sans-serif; ">
+
+                    <t t-set="result" t-value="lineas(data)"/>
+
+                    <table class="table" style="font-size: 10px !important;">
+                        <thead style="border: 1px solid #000; ">
+                            <tr style="border: 1px solid #000; ">
+                                <th style="border: 1px solid #000" class="text-center" colspan="5" scope="col">
+                                    Documento
+                                </th>
+                                <th style="border: 1px solid #000" class="text-center" colspan="2" scope="col">Cliente
+                                </th>
+                                <th style="border: 1px solid #000" class="text-center" colspan="4" scope="col">Ventas
+                                </th>
+                                <th style="border: 1px solid #000" class="text-center" colspan="3" scope="col">Total
+                                </th>
+                            </tr>
+                            <tr style="border: 1px solid #000">
+                                <td style="border: 1px solid #000">No</td>
+                                <td style="border: 1px solid #000">Fecha</td>
+                                <td style="border: 1px solid #000">Tipo</td>
+                                <td style="border: 1px solid #000">Serie</td>
+                                <td style="border: 1px solid #000">DoctoNo</td>
+                                <td style="border: 1px solid #000">NIT</td>
+                                <td style="border: 1px solid #000">Nombre</td>
+                                <td style="border: 1px solid #000">Exportaciones</td>
+                                <td style="border: 1px solid #000">Bienes</td>
+                                <td style="border: 1px solid #000">Servicios</td>
+                                <td style="border: 1px solid #000">Extentas</td>
+                                <td style="border: 1px solid #000">IVA</td>
+                                <td style="border: 1px solid #000">Venta Neta</td>
+                                <td style="border: 1px solid #000">Total</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-set="i" t-value="1"/>
+                            <tr t-foreach="result['lineas']" t-as="l" style="font-size: 10px !important; page-break-inside: avoid;">
+                                <td style="border: 1px solid #000; ">
+                                    <span t-esc="i"/>
+                                    <t t-set="i" t-value="i+1"/>
+                                </td>
+
+                                <td style="border: 1px solid #000; ">
+                                    <span t-esc="l['fecha']" t-options='{"widget": "date"}'/>
+                                </td>
+                                <td style="border: 1px solid #000; ">
+                                    <span t-esc="l['tipo']"/>
+                                </td>
+                                <td style="border: 1px solid #000; ">
+                                    <span t-esc="l['serie']"/>
+                                </td>
+                                <td style="border: 1px solid #000; ">
+                                    <span t-esc="l['numero']"/>
+                                </td>
+                                <td style="border: 1px solid #000; ">
+                                    <span t-esc="l['nit']"/>
+                                </td>
+                                <td style="border: 1px solid #000; ">
+                                    <span t-esc="l['cliente']"/>
+                                </td>
+
+                                <td style="border: 1px solid #000; " class="text-right">
+                                    <span t-esc="l['importacion']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right" style="border: 1px solid #000; ">
+                                    <span t-esc="l['compra']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right" style="border: 1px solid #000; ">
+                                    <span t-esc="l['servicio']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right" style="border: 1px solid #000; ">
+                                    <span t-esc="l['total_extento']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right" style="border: 1px solid #000; ">
+                                    <span t-esc="l['iva']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right" style="border: 1px solid #000; ">
+                                    <span t-esc="l['base']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right" style="border: 1px solid #000; ">
+                                    <span t-esc="l['total']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                            </tr>
+
+                        </tbody>
+                        <tfoot style="display: table-row-group">
+                            <tr style="font-size: 12px !important;">
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td class="text-right">
+                                    <strong>Totales</strong>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="result['totales']['importacion']['neto']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="result['totales']['compra']['neto']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="result['totales']['servicio']['neto']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="result['totales']['servicio']['exento'] + result['totales']['importacion']['exento'] + result['totales']['compra']['exento']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="result['totales']['compra']['iva'] + result['totales']['servicio']['iva']  + result['totales']['importacion']['iva']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="result['totales']['venta_neta']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                                <td class="text-right">
+                                    <span t-esc="result['totales']['compra']['total'] + result['totales']['servicio']['total'] + result['totales']['importacion']['total']"
+                                          t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+
+                    <div class="mt-5 pt-5" style="page-break-before:always;">
+
+                        <div class="row">
+                            <div class="col-2">
+                                Cantidad de facturas:
+                            </div>
+                            <div class="col-3">
+                                <span t-esc="'{0:,.0f}'.format(result['totales']['num_facturas'])"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-2">
+                                Total crédito fiscal:
+                            </div>
+                            <div class="col-3">
+                                <span t-esc="result['totales']['compra']['iva'] + result['totales']['servicio']['iva'] + result['totales']['importacion']['iva']"
+                                      t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-2"></div>
+                            <div class="col-8 text-center">
+                                <div class="text-left">
+                                    <strong>Resumen:</strong>
+                                </div>
+                                <table class="table table-bordered" style="border: 1px solid black;">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th class="text-right">Exento</th>
+                                            <th class="text-right">Neto</th>
+                                            <th class="text-right">IVA</th>
+                                            <th class="text-right">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                Bienes
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['compra']['exento']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['compra']['neto']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['compra']['iva']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['compra']['total']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                Servicios
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['servicio']['exento']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['servicio']['neto']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['servicio']['iva']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['servicio']['total']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                Exportaciones
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['importacion']['exento']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['importacion']['neto']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['importacion']['iva']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['importacion']['total']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td>
+                                                Totales
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['compra']['exento'] + result['totales']['servicio']['exento'] + result['totales']['importacion']['exento']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['compra']['neto'] + result['totales']['servicio']['neto'] + result['totales']['importacion']['neto']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['compra']['iva'] + result['totales']['servicio']['iva'] + result['totales']['importacion']['iva']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <span t-esc="result['totales']['compra']['total'] + result['totales']['servicio']['total'] + result['totales']['importacion']['total']"
+                                                    t-options="{'widget': 'monetary', 'display_currency': user.company_id.currency_id}"/>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            <div class="col-2"></div>
+                        </div>
+                        
+                    </div>
+
+
+                </div>
+                <div class="footer"></div>
+            </t>
+        </t>
+    </template>
+</odoo>

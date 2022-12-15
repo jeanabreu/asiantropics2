@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<odoo>
+	<data>
+		<record id="view_journal_form_inherit" model="ir.ui.view">
+			<field name="name">account.journal.form.inherit</field>
+			<field name="model">account.journal</field>
+			<field name="inherit_id" ref="account.view_account_journal_form" />
+			<field name="arch" type="xml">
+				<xpath expr="//page[@name='bank_account']" position="after">
+
+					<page name="bank_commission" string="Comisiones" attrs="{'invisible': [('type', '!=', 'bank')]}">
+						<div class="row">
+							<div class="col-sm-6">
+								<group>
+									<field name="cc_payment_account"/>
+									<!--<field name="percentage_cc_account" attrs="{'invisible': [('commision_country','!=','sv')]}"/>-->
+									<field name="provider_ap_account"/>
+									<!-- Se comento el campo debido a que el client (Gentusiasmo) asi lo requierio, pero se deja la logica en caso que otro cliente lo requiera - REF: PT-1100-->
+									<!--<field name="cc_fiscal_debit_account" attrs="{'invisible': [('commision_country','!=','sv')]}" />-->
+									<field name="account_move_name_desc"/>
+									<field name="commision_type"/>
+									<field name="commision_country"/>
+								</group>
+							</div>
+						</div>
+
+						<div class="row">
+							<div class="col-sm-6">
+								<group>
+									<label for="provider_commission_fixed"/>
+									<div name="amount_div" class="o_row">
+										<field name="provider_commission_fixed" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+										<field name="currency_id" options="{'no_create': True, 'no_open': True}" groups="base.group_multi_currency"/>
+									</div>
+								</group>
+							</div>
+
+							<!--<div class="col-sm-6">
+								<group>
+									<label for="provider_commission_percent"/>
+									<div>
+										<field name="provider_commission_percent" class="oe_inline"/>
+										<span class="oe_inline">%</span>
+									</div>
+								</group>
+							</div>-->
+						</div>
+
+						<div class="row">
+							<div class="col-sm-12">
+								<group>
+									<label for="journal_comissions_ids"/>
+									<div name="amount_div" class="o_row">
+										<field name="journal_comissions_ids"/>
+									</div>
+								</group>
+							</div>
+
+						</div>
+					</page>
+
+				</xpath>
+			</field>
+		</record>
+		<!-- Commissions Form -->
+		<record id="cc_payment_commisions_journal_percentage_view_form" model="ir.ui.view">
+			<field name="name">cc_payment_commisions_journal_percentage_view_form</field>
+			<field name="model">cc_payment_commisions.journal_percentage</field>
+			<field name="arch" type="xml">
+				<form>
+					<sheet>
+						<group>
+							<field name="name" />
+							<field name="provider_commission_percent"/>
+						</group>
+					</sheet>
+				</form>
+			</field>
+		</record>
+		<!-- Commissions Tree -->
+		<record id="cc_payment_commisions_journal_percentage_view_tree" model="ir.ui.view">
+			<field name="name">cc_payment_commisions_journal_percentage_view_tree</field>
+			<field name="model">cc_payment_commisions.journal_percentage</field>
+			<field name="arch" type="xml">
+				<tree string="Beneficiarios">
+					<field name="name" />
+					<field name="provider_commission_percent" />
+				</tree>
+			</field>
+		</record>
+	</data>
+</odoo>

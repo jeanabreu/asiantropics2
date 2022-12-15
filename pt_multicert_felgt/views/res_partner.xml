@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record model="ir.ui.view" id="pt_multicert_felgt_res_partner_form_view_inherit">
+        <field name="name">pt.multicert.felgt.res.partner.form.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form" />
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <field name="vat" position="after">
+                <field name="is_foreign_customer"/>
+                <field name="dpi_number"/>
+                
+            </field>
+            <field name="email" position="after">
+                <field name="invoice_currency"/>
+            </field>
+
+            <xpath expr="//page[@name='internal_notes']" position="after">
+                <page name="export_info" string="Información Exportación" attrs="{'invisible': [('is_foreign_customer', '!=', True)]}">
+                    <group string="Información">
+                        <group>
+                            <field name="consignatary_name" attrs="{'required': [('is_foreign_customer', '=', True)]}"/>
+                            <field name="consignatary_address" attrs="{'required': [('is_foreign_customer', '=', True)]}"/>
+                            <field name="consignatary_code"/>
+                            <field name="buyer_name"/>
+                            <field name="buyer_address"/>
+                            <field name="buyer_code" />
+                            <field name="exporter_name"/>
+                            <field name="exporter_code"/>
+                        </group>
+
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

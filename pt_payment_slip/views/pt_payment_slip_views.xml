@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+  <record id="pt_payment_slip_invoice_form_view" model="ir.ui.view">
+    <field name="name">pt_payment_slip_invoice.form.view</field>
+    <field name="model">pt_payment_slip.slip_config</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_sent_payment_slip" string="Enviar contraseña" type="object" attrs="{'invisible':[('state', '!=', 'posted')]}" />
+        </header>
+        <sheet>
+          <group>
+            <group>
+              <field name="name" readonly="1" />
+              <field name="state" invisible="1" />
+              <field name="partner_id" domain="[('supplier_rank', '!=', 0), ('company_id', '!=', company_id)]" />
+              <field name="invoice_id" domain="[('partner_id', '=', partner_id), ('state', 'in', ('draft', 'posted')), ('move_type', '=', 'in_invoice')]" />              
+              <field name="currency_id" />
+              <field name="amount" />
+              <field name="order_number" />
+              <field name="order_date" />
+              <field name="note" />
+            </group>
+            <group>
+              <field name="date" />
+              <field name="company_id" />
+              <field name="payment_term_id" />
+              <field name="payment_date" />
+              <field name="signed_by_employee_id" />
+            </group>
+          </group>
+          <footer>
+            <button string="Crear" name="create_payment_slip" type="object" class="oe_highlight" />
+            <button string="Cancel" class="btn btn-secondary" special="cancel" />
+          </footer>
+        </sheet>
+        <div class="oe_chatter">
+          <field name="message_follower_ids" widget="mail_followers" />
+          <field name="activity_ids" widget="mail_activity" />
+          <field name="message_ids" widget="mail_thread" />
+        </div>
+      </form>
+    </field>
+  </record>
+
+  <record id="pt_payment_slip_slip_config_form_view" model="ir.ui.view">
+    <field name="name">pt_payment_slip.slip_config.form</field>
+    <field name="model">pt_payment_slip.slip_config</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="action_sent_payment_slip" string="Enviar contraseña" type="object" attrs="{'invisible':[('state', '!=', 'posted')]}" />
+          <field name="state" widget="statusbar" statusbar_visible="draft,posted" />
+        </header>
+        <sheet>
+          <group>
+            <group>
+              <field name="name" readonly="1" />
+              <field name="partner_id" domain="[('company_id', '!=', company_id)]" />
+              <field name="invoice_id" domain="[('partner_id', '=', partner_id), ('state', 'in', ('draft', 'posted')), ('move_type', '=', 'in_invoice')]" />
+              <field name="invoice_serial" readonly="1"/>
+              <field name="invoice_number" readonly="1"/>
+              <field name="currency_id" />
+              <field name="amount" />
+              <field name="order_number" />
+              <field name="order_date" />
+              <field name="note" />
+            </group>
+            <group>
+              <field name="date" />
+              <field name="company_id" />
+              <field name="payment_term_id" />
+              <field name="payment_date" />
+              <field name="signed_by_employee_id" />
+            </group>
+          </group>
+        </sheet>
+        <div class="oe_chatter">
+          <field name="message_follower_ids" widget="mail_followers" />
+          <field name="activity_ids" widget="mail_activity" />
+          <field name="message_ids" widget="mail_thread" />
+        </div>
+      </form>
+    </field>
+  </record>
+
+  <record id="pt_payment_slip_tree_view" model="ir.ui.view">
+    <field name="name">pt_payment_slip.slip_config.tree</field>
+    <field name="model">pt_payment_slip.slip_config</field>
+    <field name="arch" type="xml">
+      <tree string="Contraseña de Pago">
+        <field name="name" />
+        <field name="partner_id" />
+        <field name="invoice_id" />
+        <field name="invoice_ref" />
+        <field name="invoice_serial"/>
+        <field name="invoice_number"/>
+        <field name="amount" />
+        <field name="order_number" />
+        <field name="payment_date" />
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_pt_payment_slip" model="ir.actions.act_window">
+    <field name="name">Contraseña de Pago</field>
+    <field name="res_model">pt_payment_slip.slip_config</field>
+    <field name="view_mode">tree,form</field>
+    <field name="view_id" ref="pt_payment_slip_tree_view" />
+    <field name="help" type="html">
+      <p class="oe_view_nocontent_create">
+          Agrega la primera contraseña de pago
+      </p>
+    </field>
+  </record>
+
+  <menuitem id="pt_payment_slip_menu" action="action_pt_payment_slip"  parent="account.menu_finance_payables" name="Contraseña de Pago" sequence="2" />
+
+</odoo>
