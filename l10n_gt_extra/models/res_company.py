@@ -29,3 +29,6 @@ class ResCompany(models.Model):
     iva_retencion_account_id = fields.Many2one('account.journal', string='Diario de retención de IVA')
     isr_retencion_account_id = fields.Many2one('account.journal', string='Diario de retención de ISR')
     show_analytic_lines = fields.Boolean(string="Mostrar lineas analíticas", default=False)
+    
+    user_electronic_payment = fields.Many2one('res.users', string='B.O. Pagos Electronicos')
+    manager_electronic_payment = fields.Many2one('res.users', string='Encargado Pagos Electronicos')

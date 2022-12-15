@@ -38,8 +38,8 @@
                     <field name="name" invisible="1" />
                 </group>
                 <footer>
-                    <button name="print_report" string="Reporte" type="object" class="oe_highlight" />
-                    <!-- <button name="print_report_excel" string="Reporte excel" type="object" class="oe_highlight"/>-->
+                    <button name="print_report" string="Reporte PDF" type="object" class="oe_highlight" />
+                    <button name="get_xlsx" string="Reporte Excel" type="object" class="oe_highlight"/>
                     <button special="cancel" string="Cancelar" class="oe_link" />
                 </footer>
             </form>
@@ -55,6 +55,14 @@
 
     <menuitem action="window_reporte_compras" id="menu_asistente_reporte_compras" parent="gt_extra_main_menu" />
     <report id="action_reporte_compras" model="l10n_gt_extra.asistente_reporte_compras" string="Libro de compras" report_type="qweb-pdf" name="l10n_gt_extra.reporte_compras" file="l10n_gt_extra.reporte_compras" paperformat="l10n_gt_extra.paperformat_report" />
+    <record id="reporte_compras_xlsx" model="ir.actions.report">
+        <field name="name">reporte.compras.xlsx</field>
+        <field name="model">l10n_gt_extra.asistente_reporte_compras</field>
+        <field name="report_type">xlsx</field>
+        <field name="report_name">l10n_gt_extra.reporte_compras_xlsx</field>
+        <field name="report_file">l10n_gt_extra.reporte_compras_xlsx</field>
+        <field name="binding_type">report</field>
+    </record>
 
     <record id="asistente_ventas_reporte" model="ir.ui.view">
         <field name="name">l10n_gt_extra.asistente_reporte_ventas</field>
@@ -82,14 +90,13 @@
                     <field name="archivo" readonly="1" filename="name" />
                 </group>
                 <footer>
-                    <button name="print_report" string="Reporte" type="object" class="oe_highlight" />
-                    <!--<button name="print_report_excel" string="Reporte excel" type="object" class="oe_highlight"/>-->
+                    <button name="print_report" string="Reporte PDF" type="object" class="oe_highlight" />
+                    <button name="get_xlsx" string="Reporte Excel" type="object" class="oe_highlight"/>
                     <button special="cancel" string="Cancelar" class="oe_link" />
                 </footer>
             </form>
         </field>
     </record>
-
 
     <record id="window_reporte_ventas" model="ir.actions.act_window">
         <field name="name">Libro de ventas</field>
@@ -100,6 +107,14 @@
 
     <menuitem action="window_reporte_ventas" id="menu_asistente_reporte_ventas" parent="gt_extra_main_menu" />
     <report id="action_reporte_ventas" model="l10n_gt_extra.asistente_reporte_ventas" string="Libro de ventas" report_type="qweb-pdf" name="l10n_gt_extra.reporte_ventas" file="l10n_gt_extra.reporte_ventas" paperformat="l10n_gt_extra.paperformat_report" />
+    <record id="reporte_ventas_xlsx" model="ir.actions.report">
+        <field name="name">reporte.ventas.xlsx</field>
+        <field name="model">l10n_gt_extra.asistente_reporte_ventas</field>
+        <field name="report_type">xlsx</field>
+        <field name="report_name">l10n_gt_extra.reporte_ventas_xlsx</field>
+        <field name="report_file">l10n_gt_extra.reporte_ventas_xlsx</field>
+        <field name="binding_type">report</field>
+    </record>
 
     <record id="asistente_reporte_diario" model="ir.ui.view">
         <field name="name">l10n_gt_extra.asistente_reporte_diario</field>

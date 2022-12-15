@@ -193,6 +193,8 @@ class AccountMove(models.Model):
         
         isr_amount = 0
         iva_amount = 0
+        iva_amount_currency = 0
+        isr_amount_currency = 0
         iva_retencion_account_data = False
         iva_retencion_account_id = False
         iva_retencion_account_root_id = False
@@ -227,10 +229,23 @@ class AccountMove(models.Model):
         
         if self.iva_withold_amount > 0:
             iva_amount = self.iva_withold_amount
+            iva_amount_currency = self.iva_withold_amount
+            
+            rate = 1
+            if self.currency_id.id != self.env.company.currency_id.id and self.conversion_rate_ref > 0:
+                rate = 1 / self.conversion_rate_ref
+                iva_amount = self.iva_withold_amount / rate #SE HACE LA CONVERSIÓN PARA QUE LA LÍNEA QUE AGREGUE A LOS APUNTES CONTABLES SÍ ESTE QUETZALIZADO
             if self.isr_withold_amount > 0:
                 isr_amount = self.isr_withold_amount
+                isr_amount_currency = self.isr_withold_amount
+                rate = 1
+                if self.currency_id.id != self.env.company.currency_id.id and self.conversion_rate_ref > 0:
+                    rate = 1 / self.conversion_rate_ref
+                    isr_amount = self.isr_withold_amount / rate #SE HACE LA CONVERSIÓN PARA QUE LA LÍNEA QUE AGREGUE A LOS APUNTES CONTABLES SÍ ESTE QUETZALIZADO
+            
             has_query_iva_line = False
-            has_rec_iva_line = False     
+            has_rec_iva_line = False
+            updating_current_iva_line = False
             self.invalidate_cache()
             
             sql = ""
@@ -243,12 +258,13 @@ class AccountMove(models.Model):
             cr_log.execute(sql)
             
             operation_total = 0
+            operation_currency_total = 0
             self.invalidate_cache()
             
             
             if self.move_type == 'in_invoice':
                 sql = ""
-                sql += "SELECT debit"
+                sql += "SELECT debit, amount_currency"
                 sql += " FROM account_move_line"
                 sql += " WHERE debit > 0"
                 sql += " AND   move_id = %s" % (self.id)
@@ -258,6 +274,7 @@ class AccountMove(models.Model):
                 
                 for query_data in cr_total.dictfetchall():
                     operation_total += query_data['debit']
+                    operation_currency_total += query_data['amount_currency']
                 
                 iva_line_counter = 0
                 
@@ -268,7 +285,7 @@ class AccountMove(models.Model):
                     iva_line_counter += 1
                     
                     
-                    if iva_line_counter > 1:
+                    if iva_line_counter >= 1:
                         sql = ""
                         sql = "DELETE FROM account_move_line WHERE id = %s;" % (query_data['id'])
                         
@@ -278,13 +295,16 @@ class AccountMove(models.Model):
                         
                         self._cr.execute(sql)
                         self._cr.commit()
+                        has_rec_iva_line = False
+                        has_query_iva_line = False
+                        updating_current_iva_line = True
                     else:
                         
                         sql = ""
                         sql += "UPDATE account_move_line"
                         sql += " SET price_unit = %s," % (iva_amount * -1)
                         sql += " credit = %s," % (iva_amount)
-                        sql += " amount_currency = %s," % (iva_amount*-1)
+                        sql += " amount_currency = %s," % (iva_amount_currency*-1)
                         sql += " balance = %s," % (iva_amount*-1)
                         sql += " price_subtotal = %s," % (iva_amount * -1)
                         sql += " price_total = %s," % (iva_amount * -1)
@@ -296,55 +316,58 @@ class AccountMove(models.Model):
                         print('IVA - 3')
                         print('------------------')
                         
-                        
                         self._cr.execute(sql)
                         self._cr.commit()
                         
-                for line in self.line_ids:
-                    print('lines', line.name)
-                    print(line.account_id.id, '=', self.partner_id.property_account_payable_id.id)
+                        has_rec_iva_line = False
+                        has_query_iva_line = False
+                        
+                        for line in self.line_ids:
+                            print('lines', line.name)
+                            print(line.account_id.id, '=', self.partner_id.property_account_payable_id.id)
 
-                    if line.account_id.id == self.partner_id.property_account_payable_id.id:
-                        partner_amount = operation_total - iva_amount - isr_amount
-                        price_unit = partner_amount * -1
-                        credit = partner_amount
-                        amount_currency = partner_amount*-1
-                        balance = partner_amount * -1
-                        price_subtotal = partner_amount * -1
-                        amount_residual = partner_amount * -1
-                        amount_residual_currency = partner_amount
-                        price_total = partner_amount * -1
-                        
-                        print('------------------')
-                        print('IVA - UPDATE PARTNER')
-                        print(operation_total)
-                        print(iva_amount)
-                        print(partner_amount)
-                        print('------------------')
-                        
-                        
-                        sql = ""
-                        sql += "UPDATE account_move_line"
-                        sql += " SET price_unit = %s," % (price_unit)
-                        sql += " credit = %s," % (credit)
-                        sql += " amount_currency = %s," % (amount_currency)
-                        sql += " balance = %s," % (balance)
-                        sql += " price_subtotal = %s," % (price_subtotal)
-                        sql += " amount_residual = %s," % (amount_residual)
-                        sql += " amount_residual_currency = %s," % (amount_residual_currency)
-                        sql += " price_total = %s," % (price_total)
-                        sql += " write_uid = %s," % (self.env.user.id)
-                        sql += " write_date = '%s'" % (datetime.now())
-                        sql += " WHERE id = %s" % (line.id)
-                        
-                        
-                        self._cr.execute(sql)
-                        self._cr.commit()
-                        self.invalidate_cache()
-                        
-                        print('------------------')
-                        print('IVA - 3.1')
-                        print('------------------')
+                            if line.account_id.id == self.partner_id.property_account_payable_id.id:
+                                partner_amount = operation_total - iva_amount - isr_amount
+                                price_unit = partner_amount * -1
+                                credit = partner_amount
+                                partner_amount_currency = operation_currency_total - iva_amount_currency - isr_amount_currency
+                                amount_currency = partner_amount_currency *-1
+                                balance = partner_amount * -1
+                                price_subtotal = partner_amount * -1
+                                amount_residual = partner_amount * -1
+                                amount_residual_currency = partner_amount_currency
+                                price_total = partner_amount * -1
+                                
+                                print('------------------')
+                                print('IVA - UPDATE PARTNER')
+                                print(operation_total)
+                                print(iva_amount)
+                                print(isr_amount)
+                                print(partner_amount)
+                                print('------------------')
+                                
+                                
+                                sql = ""
+                                sql += "UPDATE account_move_line"
+                                sql += " SET price_unit = %s," % (price_unit)
+                                sql += " credit = %s," % (credit)
+                                sql += " amount_currency = %s," % (amount_currency)
+                                sql += " balance = %s," % (balance)
+                                sql += " price_subtotal = %s," % (price_subtotal)
+                                sql += " amount_residual = %s," % (amount_residual)
+                                sql += " amount_residual_currency = %s," % (amount_residual_currency)
+                                sql += " price_total = %s," % (price_total)
+                                sql += " write_uid = %s," % (self.env.user.id)
+                                sql += " write_date = '%s'" % (datetime.now())
+                                sql += " WHERE id = %s" % (line.id)
+                                
+                                self._cr.execute(sql)
+                                self._cr.commit()
+                                self.invalidate_cache()
+                                
+                                print('------------------')
+                                print('IVA - 3.1')
+                                print('------------------')
                                 
                             
                         #return True
@@ -357,7 +380,7 @@ class AccountMove(models.Model):
             
             if self.move_type == 'out_invoice':
                 sql = ""
-                sql += "SELECT credit"
+                sql += "SELECT credit, amount_currency"
                 sql += " FROM account_move_line"
                 sql += " WHERE credit > 0"
                 sql += " AND   move_id = %s" % (self.id)
@@ -367,13 +390,14 @@ class AccountMove(models.Model):
                 
                 for query_data in cr_total.dictfetchall():
                     operation_total += query_data['credit']
+                    operation_currency_total += query_data['amount_currency']
                 
                 iva_line_counter = 0
                 for query_data in cr_log.dictfetchall():
 
                     has_query_iva_line = True
                     iva_line_counter += 1
-                    if iva_line_counter > 1:
+                    if iva_line_counter >= 1:
                         sql = ""
                         sql = "DELETE FROM account_move_line WHERE id = %s;" % (query_data['id'])
                         
@@ -383,13 +407,16 @@ class AccountMove(models.Model):
                         
                         self._cr.execute(sql)
                         self._cr.commit()
+                        has_rec_iva_line = False
+                        has_query_iva_line = False
+                        updating_current_iva_line = True
                     else:
                         
                         sql = ""
                         sql += "UPDATE account_move_line"
                         sql += " SET price_unit = %s," % (iva_amount * -1)
                         sql += " debit = %s," % (iva_amount)
-                        sql += " amount_currency = %s," % (iva_amount)
+                        sql += " amount_currency = %s," % (iva_amount_currency)
                         sql += " balance = %s," % (iva_amount)
                         sql += " price_subtotal = %s," % (iva_amount * -1)
                         sql += " price_total = %s," % (iva_amount * -1)
@@ -411,9 +438,12 @@ class AccountMove(models.Model):
 
                             if line.account_id.id == self.partner_id.property_account_receivable_id.id:
                                 partner_amount = operation_total - iva_amount - isr_amount
+                                partner_amount_currency = operation_currency_total - iva_amount_currency - isr_amount_currency
+                                amount_currency = partner_amount_currency
+                                if amount_currency < 0:
+                                    amount_currency = amount_currency *-1
                                 price_unit = partner_amount * -1
                                 credit = partner_amount
-                                amount_currency = partner_amount
                                 balance = partner_amount
                                 price_subtotal = partner_amount * -1
                                 amount_residual = partner_amount
@@ -462,46 +492,94 @@ class AccountMove(models.Model):
             
             if not has_rec_iva_line and not has_query_iva_line:
                 
+                match_partner_account =  self.partner_id.property_account_receivable_id.id
+                if self.move_type == 'in_invoice':
+                    match_partner_account =  self.partner_id.property_account_payable_id.id
                 
                 for line in self.line_ids:
                     print('lines', line.name)
-                    if line.account_id.id == self.partner_id.property_account_receivable_id.id:
-                        price_unit = line.price_unit + iva_amount
-                        credit = line.debit - iva_amount
-                        amount_currency = line.amount_currency - iva_amount
-                        balance = line.balance - iva_amount
-                        price_subtotal = line.price_subtotal + iva_amount
-                        amount_residual = line.amount_residual - iva_amount
-                        amount_residual_currency = line.amount_residual_currency - iva_amount
-                        price_total = line.price_total + iva_amount
+                    print(line.account_id.name, match_partner_account)
+                    if line.account_id.id == match_partner_account and not updating_current_iva_line:
                         
-                        print('------------------')
-                        print('IVA - 4.1')
-                        print('------------------')
+                        if self.move_type == 'out_invoice':
+                            price_unit = line.price_unit + iva_amount
+                            credit = line.debit - iva_amount
+                            amount_currency = line.amount_currency - iva_amount_currency
+                            balance = line.balance - iva_amount
+                            price_subtotal = line.price_subtotal + iva_amount
+                            amount_residual = line.amount_residual - iva_amount
+                            amount_residual_currency = line.amount_residual_currency - iva_amount
+                            price_total = line.price_total + iva_amount
+                            
+                            print('------------------')
+                            print('IVA - 4.1')
+                            print('------------------')
+                            
+                            sql = ""
+                            sql += "UPDATE account_move_line"
+                            sql += " SET price_unit = %s," % (price_unit)
+                            sql += " debit = %s," % (credit)
+                            sql += " amount_currency = %s," % (amount_currency)
+                            sql += " balance = %s," % (balance)
+                            sql += " price_subtotal = %s," % (price_subtotal)
+                            sql += " amount_residual = %s," % (amount_residual)
+                            sql += " amount_residual_currency = %s," % (amount_residual_currency)
+                            sql += " price_total = %s," % (price_total)
+                            sql += " write_uid = %s," % (self.env.user.id)
+                            sql += " write_date = '%s'" % (datetime.now())
+                            sql += " WHERE id = %s" % (line.id)
+                            
+                            
+                            self._cr.execute(sql)
+                            self._cr.commit()
+                            
+                            self.invalidate_cache()
+                            
+                            print('------------------')
+                            print('IVA - 5')
+                            print('------------------')
+                            
+                            
+                        if self.move_type == 'in_invoice':
+                            price_unit = line.price_unit + iva_amount
+                            credit = line.credit - iva_amount
+                            amount_currency = line.amount_currency - (iva_amount_currency *-1)
+                            balance = line.balance - iva_amount
+                            price_subtotal = line.price_subtotal + iva_amount
+                            amount_residual = line.amount_residual - iva_amount
+                            amount_residual_currency = line.amount_residual_currency - (iva_amount_currency *-1)
+                            price_total = line.price_total + iva_amount
                         
-                        sql = ""
-                        sql += "UPDATE account_move_line"
-                        sql += " SET price_unit = %s," % (price_unit)
-                        sql += " debit = %s," % (credit)
-                        sql += " amount_currency = %s," % (amount_currency)
-                        sql += " balance = %s," % (balance)
-                        sql += " price_subtotal = %s," % (price_subtotal)
-                        sql += " amount_residual = %s," % (amount_residual)
-                        sql += " amount_residual_currency = %s," % (amount_residual_currency)
-                        sql += " price_total = %s," % (price_total)
-                        sql += " write_uid = %s," % (self.env.user.id)
-                        sql += " write_date = '%s'" % (datetime.now())
-                        sql += " WHERE id = %s" % (line.id)
-                        
-                        
-                        self._cr.execute(sql)
-                        self._cr.commit()
-                        
-                        self.invalidate_cache()
-                        
-                        print('------------------')
-                        print('IVA - 5')
-                        print('------------------')
+                            print('------------------')
+                            print('IVA - 4.1')
+                            print(iva_amount_currency)
+                            print(amount_residual)
+                            print(amount_residual_currency)
+                            print('------------------')
+                            
+                            sql = ""
+                            sql += "UPDATE account_move_line"
+                            sql += " SET price_unit = %s," % (price_unit)
+                            sql += " credit = %s," % (credit)
+                            sql += " amount_currency = %s," % (amount_currency)
+                            sql += " balance = %s," % (balance)
+                            sql += " price_subtotal = %s," % (price_subtotal)
+                            sql += " amount_residual = %s," % (amount_residual)
+                            sql += " amount_residual_currency = %s," % (amount_residual_currency)
+                            sql += " price_total = %s," % (price_total)
+                            sql += " write_uid = %s," % (self.env.user.id)
+                            sql += " write_date = '%s'" % (datetime.now())
+                            sql += " WHERE id = %s" % (line.id)
+                            
+                            
+                            self._cr.execute(sql)
+                            self._cr.commit()
+                            
+                            self.invalidate_cache()
+                            
+                            print('------------------')
+                            print('IVA - 5')
+                            print('------------------')
                   
                 sql = ""
                 sql += "INSERT INTO account_move_line"
@@ -522,13 +600,13 @@ class AccountMove(models.Model):
                     debit = iva_amount
                     credit = 0
                     balance = iva_amount
-                    amount_currency = iva_amount
+                    amount_currency = iva_amount_currency
                     
                 if self.move_type == 'in_invoice':
                     debit = 0
                     credit = iva_amount
                     balance = iva_amount *-1
-                    amount_currency = iva_amount*-1
+                    amount_currency = iva_amount_currency*-1
                 
                 params = {
                     "move_id": self.id, 
@@ -583,6 +661,7 @@ class AccountMove(models.Model):
         print('----------------------')
 
         if self.isr_withold_amount > 0:
+            
             if self.move_type == "in_invoice":
                 isr_retencion_account_data = False
                 isr_retencion_account_id = False
@@ -597,8 +676,14 @@ class AccountMove(models.Model):
                 
             
                 isr_amount = self.isr_withold_amount
+                isr_amount_currency = self.isr_withold_amount
+                rate = 1
+                if self.currency_id.id != self.env.company.currency_id.id and self.conversion_rate_ref > 0:
+                    rate = 1 / self.conversion_rate_ref
+                    isr_amount = self.isr_withold_amount / rate #SE HACE LA CONVERSIÓN PARA QUE LA LÍNEA QUE AGREGUE A LOS APUNTES CONTABLES SÍ ESTE QUETZALIZADO
                 has_query_isr_line = False
-                has_rec_isr_line = False     
+                has_rec_isr_line = False
+                updating_current_isr_line = False
                 self.invalidate_cache()
                 
                 sql = ""
@@ -611,10 +696,11 @@ class AccountMove(models.Model):
                 cr_log.execute(sql)
                 
                 operation_total = 0
+                operation_currency_total = 0
                 self.invalidate_cache()
                 
                 sql = ""
-                sql += "SELECT debit"
+                sql += "SELECT debit, amount_currency"
                 sql += " FROM account_move_line"
                 sql += " WHERE debit > 0"
                 sql += " AND   move_id = %s" % (self.id)
@@ -624,7 +710,7 @@ class AccountMove(models.Model):
                 
                 for query_data in cr_total.dictfetchall():
                     operation_total += query_data['debit']
-                    
+                    operation_currency_total += query_data['amount_currency']
                 
                 isr_line_counter = 0
                 for query_data in cr_log.dictfetchall():
@@ -633,12 +719,17 @@ class AccountMove(models.Model):
                     
                         has_query_isr_line = True
                         isr_line_counter += 1
-                        if isr_line_counter > 1:                            
+                        if isr_line_counter >= 1:                            
                             sql = ""
                             sql = "DELETE FROM account_move_line WHERE id = %s;" % (query_data['id'])
                             
                             self._cr.execute(sql)
                             self._cr.commit()
+                            
+                            has_rec_isr_line = False
+                            has_query_isr_line = False
+                            updating_current_isr_line = True
+                            
                         else:
                             
                             print('------------------')
@@ -650,7 +741,7 @@ class AccountMove(models.Model):
                             sql += "UPDATE account_move_line"
                             sql += " SET price_unit = %s," % (isr_amount * -1)
                             sql += " credit = %s," % (isr_amount)
-                            sql += " amount_currency = %s," % (isr_amount * -1)
+                            sql += " amount_currency = %s," % (isr_amount_currency * -1)
                             sql += " balance = %s," % (isr_amount * -1)
                             sql += " price_subtotal = %s," % (isr_amount * -1)
                             sql += " price_total = %s," % (isr_amount * -1)
@@ -673,7 +764,8 @@ class AccountMove(models.Model):
                                     partner_amount = operation_total - isr_amount - iva_amount
                                     price_unit = partner_amount * -1
                                     credit = partner_amount
-                                    amount_currency = partner_amount * -1
+                                    partner_amount_currency = operation_currency_total - isr_amount_currency - iva_amount_currency
+                                    amount_currency = partner_amount_currency * -1
                                     balance = partner_amount
                                     price_subtotal = partner_amount * -1
                                     amount_residual = partner_amount * -1
@@ -712,20 +804,21 @@ class AccountMove(models.Model):
                     
                     for line in self.line_ids:
                         
-                        if line.account_id.id == self.partner_id.property_account_payable_id.id:
+                        if line.account_id.id == self.partner_id.property_account_payable_id.id and not updating_current_isr_line:
                             price_unit = line.price_unit + isr_amount
                             credit = line.credit - isr_amount
-                            amount_currency = line.amount_currency + isr_amount
+                            amount_currency = line.amount_currency + isr_amount_currency + iva_amount_currency
                             balance = line.balance + isr_amount
                             price_subtotal = line.price_subtotal + isr_amount
                             amount_residual = line.amount_residual + isr_amount
                             
-                            amount_residual_currency = line.amount_residual_currency + isr_amount
+                            amount_residual_currency = line.amount_residual_currency + isr_amount_currency + iva_amount_currency
                             price_total = line.price_total + isr_amount
                             
                             print('------------------')
                             print('ISR - 3')
                             print('------------------')
+                            
                             
                             sql = ""
                             sql += "UPDATE account_move_line"
@@ -762,7 +855,7 @@ class AccountMove(models.Model):
                     move_date = datetime.now().date()
                     if self.date:
                         move_date = self.date
-                    params = [self.id, self.name, move_date, self.state, self.journal_id.id, company_id.id, company_id.currency_id.id, isr_retencion_account_id, isr_retencion_account_root_id.id, "10", "Retencion de ISR", 1, isr_amount * -1, 0, 0, isr_amount, isr_amount * -1, isr_amount * -1, isr_amount * -1, isr_amount * -1, self.currency_id.id, self.partner_id.id, True, self.env.user.id, datetime.now(), self.env.user.id, datetime.now()]
+                    params = [self.id, self.name, move_date, self.state, self.journal_id.id, company_id.id, company_id.currency_id.id, isr_retencion_account_id, isr_retencion_account_root_id.id, "10", "Retencion de ISR", 1, isr_amount * -1, 0, 0, isr_amount, isr_amount * -1, isr_amount_currency * -1, isr_amount * -1, isr_amount * -1, self.currency_id.id, self.partner_id.id, True, self.env.user.id, datetime.now(), self.env.user.id, datetime.now()]
                     
                     self._cr.execute(sql, params)
                     self._cr.commit()
@@ -792,8 +885,14 @@ class AccountMove(models.Model):
                 
             
                 isr_amount = self.isr_withold_amount
+                isr_amount_currency = self.isr_withold_amount
+                rate = 1
+                if self.currency_id.id != self.env.company.currency_id.id:
+                    rate = 1 / self.conversion_rate_ref
+                    isr_amount = self.isr_withold_amount / rate #SE HACE LA CONVERSIÓN PARA QUE LA LÍNEA QUE AGREGUE A LOS APUNTES CONTABLES SÍ ESTE QUETZALIZADO
                 has_query_isr_line = False
-                has_rec_isr_line = False     
+                has_rec_isr_line = False
+                updating_current_isr_line = False
                 self.invalidate_cache()
                 
                 sql = ""
@@ -806,10 +905,11 @@ class AccountMove(models.Model):
                 cr_log.execute(sql)
                 
                 operation_total = 0
+                operation_currency_total = 0
                 self.invalidate_cache()
                 
                 sql = ""
-                sql += "SELECT credit"
+                sql += "SELECT credit, amount_currency"
                 sql += " FROM account_move_line"
                 sql += " WHERE credit > 0"
                 sql += " AND   move_id = %s" % (self.id)
@@ -819,7 +919,7 @@ class AccountMove(models.Model):
                 
                 for query_data in cr_total.dictfetchall():
                     operation_total += query_data['credit']
-                
+                    operation_currency_total += query_data['amount_currency']
                 
                 isr_line_counter = 0
                 for query_data in cr_log.dictfetchall():
@@ -830,12 +930,16 @@ class AccountMove(models.Model):
 
                     has_query_isr_line = True
                     isr_line_counter += 1
-                    if isr_line_counter > 1:
+                    if isr_line_counter >= 1:
                         sql = ""
                         sql = "DELETE FROM account_move_line WHERE id = %s;" % (query_data['id'])
                         
                         self._cr.execute(sql)
                         self._cr.commit()
+                        
+                        has_query_isr_line = False
+                        has_rec_isr_line = False
+                        updating_current_isr_line = True
                     else:
                         
                         print('------------------')
@@ -846,7 +950,7 @@ class AccountMove(models.Model):
                         sql += "UPDATE account_move_line"
                         sql += " SET price_unit = %s," % (isr_amount * -1)
                         sql += " debit = %s," % (isr_amount)
-                        sql += " amount_currency = %s," % (isr_amount)
+                        sql += " amount_currency = %s," % (isr_amount_currency)
                         sql += " balance = %s," % (isr_amount * -1)
                         sql += " price_subtotal = %s," % (isr_amount * -1)
                         sql += " price_total = %s," % (isr_amount * -1)
@@ -867,7 +971,10 @@ class AccountMove(models.Model):
                                 partner_amount = operation_total - isr_amount - iva_amount
                                 price_unit = partner_amount * -1
                                 credit = partner_amount
-                                amount_currency = partner_amount
+                                partner_amount_currency = operation_currency_total - isr_amount_currency - iva_amount_currency
+                                amount_currency = partner_amount_currency
+                                if amount_currency < 0:
+                                    amount_currency = amount_currency *-1
                                 balance = partner_amount
                                 price_subtotal = partner_amount * -1
                                 amount_residual = partner_amount * -1
@@ -888,7 +995,7 @@ class AccountMove(models.Model):
                                 sql += " price_subtotal = %s," % (price_subtotal)
                                 sql += " amount_residual = %s," % (amount_residual)
                                 sql += " amount_residual_currency = %s," % (amount_residual_currency)
-                                sql += " price_total = %s," % (price_total)
+                                sql += " price_total = %s," % (partner_amount)
                                 sql += " write_uid = %s," % (self.env.user.id)
                                 sql += " write_date = '%s'" % (datetime.now())
                                 sql += " WHERE id = %s" % (line.id)
@@ -912,10 +1019,10 @@ class AccountMove(models.Model):
                     
                     for line in self.line_ids:
                         
-                        if line.account_id.id == self.partner_id.property_account_receivable_id.id:
+                        if line.account_id.id == self.partner_id.property_account_receivable_id.id and not updating_current_isr_line:
                             price_unit = line.price_unit + isr_amount
                             debit = line.debit - isr_amount
-                            amount_currency = line.amount_currency - isr_amount
+                            amount_currency = line.amount_currency - isr_amount_currency
                             balance = line.balance - isr_amount
                             price_subtotal = line.price_subtotal + isr_amount
                             amount_residual = line.amount_residual - isr_amount
@@ -961,7 +1068,7 @@ class AccountMove(models.Model):
                     move_date = datetime.now().date()
                     if self.date:
                         move_date = self.date
-                    params = [self.id, self.name, move_date, self.state, self.journal_id.id, company_id.id, company_id.currency_id.id, isr_retencion_account_id, isr_retencion_account_root_id.id, "10", "Retencion de ISR", 1, isr_amount * -1, 0, isr_amount, 0, isr_amount, isr_amount, isr_amount * -1, isr_amount * -1, self.currency_id.id, self.partner_id.id, True, self.env.user.id, datetime.now(), self.env.user.id, datetime.now()]
+                    params = [self.id, self.name, move_date, self.state, self.journal_id.id, company_id.id, company_id.currency_id.id, isr_retencion_account_id, isr_retencion_account_root_id.id, "10", "Retencion de ISR", 1, isr_amount * -1, 0, isr_amount, 0, isr_amount, isr_amount_currency, isr_amount * -1, isr_amount * -1, self.currency_id.id, self.partner_id.id, True, self.env.user.id, datetime.now(), self.env.user.id, datetime.now()]
                     
                     self._cr.execute(sql, params)
                     self._cr.commit()
@@ -981,8 +1088,10 @@ class AccountMove(models.Model):
         company_id = self.env.company
         
         for vals in vals_list:
-            
+            iva_amount_currency = 0
+            isr_amount_currency = 0
             # IVA Process
+            
             if "iva_withold_amount" in vals:
                 invoice_type = "out_invoice"
                 if "provider_invoice_number" in vals:
@@ -1012,17 +1121,24 @@ class AccountMove(models.Model):
                         raise ValidationError('Debe seleccionar el diario a utilizar con IVA')
                     
                     iva_amount = vals['iva_withold_amount']
+                    
+                    if vals['isr_withold_amount'] > 0:
+                        isr_amount = vals['isr_withold_amount']
                     if 'currency_id' in vals and 'company_id':
                         company_currency = company_id.currency_id.id
                         has_foreign_currency = vals['currency_id'] and vals['currency_id'] != company_currency
                         if has_foreign_currency:
-                            currency_amount = iva_amount
-                            line_currency = company_currency
-                        else:
+                            iva_amount_currency = vals['iva_withold_amount']
+                            rate = 1
+                            if vals['conversion_rate_ref'] > 0:
+                                rate = 1 / vals['conversion_rate_ref']
+                                iva_amount = vals['iva_withold_amount'] / rate #SE HACE LA CONVERSIÓN PARA QUE LA LÍNEA QUE AGREGUE A LOS APUNTES CONTABLES SÍ ESTE QUETZALIZADO
+                            
                             line_currency = vals['currency_id']
-                            currency_amount = iva_amount
+                        else:
+                            line_currency = company_currency
+                            
                     else:
-                        currency_amount = iva_amount
                         company_currency = company_id.currency_id.id
                         line_currency = company_currency
                     
@@ -1035,8 +1151,8 @@ class AccountMove(models.Model):
                         if 'provider_invoice_serial' in vals:
                             if vals['provider_invoice_serial']:
                                 partner_account_id = partner_data.property_account_payable_id.id
-                            else:
-                                partner_account_id = partner_data.property_account_receivable_id.id
+                        else:
+                            partner_account_id = partner_data.property_account_receivable_id.id
                     
                     if partner_data.tax_withholding_iva == "iva_forgiveness" and move_type == 'out_invoice':
                         if not company_id.iva_retencion_account_id:
@@ -1057,7 +1173,12 @@ class AccountMove(models.Model):
                                         negative_amount = iva_amount * -1
                                         price_unit = line[2]['price_unit'] + iva_amount
                                         credit = line[2]['credit'] - iva_amount
-                                        amount_currency = line[2]['amount_currency'] + iva_amount
+                                        amount_currency = line[2]['amount_currency'] - iva_amount_currency
+                                        
+                                        price_unit = round(price_unit,2)
+                                        credit = round(credit,2)
+                                        amount_currency = round(amount_currency,2)
+                                        
                                         line[2].update(
                                             {
                                                 "price_unit": price_unit, 
@@ -1077,16 +1198,17 @@ class AccountMove(models.Model):
                                 move_date = datetime.now().date()
                                 if 'date' in vals:
                                     move_date = vals['date']
-                                
+                                iva_amount = round(iva_amount, 2)
+                                iva_amount_currency = round(iva_amount_currency, 2)
                                 ex_iva_line = {
                                     "account_id": iva_retencion_account_id,
-                                    "name": "Exención de ISR",
+                                    "name": "Exención de IVA",
                                     "quantity": 1,
                                     "price_unit": iva_amount * -1,
                                     "discount": 0,
                                     "debit": 0,
                                     "credit": iva_amount,
-                                    "amount_currency": iva_amount * -1,
+                                    "amount_currency": iva_amount_currency * -1,
                                     "currency_id": line_currency,
                                     "partner_id": vals["partner_id"],
                                     "date": move_date,
@@ -1116,13 +1238,17 @@ class AccountMove(models.Model):
                                         negative_amount = iva_amount * -1
                                         price_unit = line[2]['price_unit'] + iva_amount
                                         credit = line[2]['credit'] - iva_amount
-                                        amount_currency = line[2]['amount_currency'] + iva_amount
+                                        amount_currency = line[2]['amount_currency'] - (iva_amount_currency * -1)
                                         
                                         print('--------------- PROV')
                                         print(price_unit)
                                         print(credit)
                                         print(amount_currency)
                                         print('--------------- PROV')
+                                        
+                                        price_unit = round(price_unit,2)
+                                        credit = round(credit,2)
+                                        amount_currency = round(amount_currency,2)
                                         
                                         line[2].update(
                                             {
@@ -1131,27 +1257,30 @@ class AccountMove(models.Model):
                                                 "amount_currency": amount_currency
                                             }
                                         )    
-                                else:
-                                    positive_amount = iva_amount
-                                    negative_amount = iva_amount * -1
-                                    price_unit = line[2]['price_unit'] + iva_amount
-                                    credit = line[2]['debit'] - iva_amount
-                                    amount_currency = line[2]['amount_currency'] - iva_amount
-                                    
-                                    
-                                    print('--------------- CLIENT')
-                                    print(price_unit)
-                                    print(credit)
-                                    print(amount_currency)
-                                    print('--------------- CLIENT')
-                                    
-                                    line[2].update(
-                                        {
-                                            "price_unit": price_unit, 
-                                            "debit": credit, 
-                                            "amount_currency": amount_currency
-                                        }
-                                    )    
+                            else:
+                                positive_amount = iva_amount
+                                negative_amount = iva_amount * -1
+                                price_unit = line[2]['price_unit'] + iva_amount
+                                credit = line[2]['debit'] - iva_amount
+                                amount_currency = line[2]['amount_currency'] - (iva_amount_currency * -1)
+                                
+                                price_unit = round(price_unit,2)
+                                credit = round(credit,2)
+                                amount_currency = round(amount_currency,2)
+                                
+                                print('--------------- CLIENT')
+                                print(price_unit)
+                                print(credit)
+                                print(amount_currency)
+                                print('--------------- CLIENT')
+                                
+                                line[2].update(
+                                    {
+                                        "price_unit": price_unit, 
+                                        "debit": credit, 
+                                        "amount_currency": amount_currency
+                                    }
+                                )    
                     vals.update({"line_ids": current_lines})
                     
                     inv_lines = vals['line_ids']
@@ -1161,6 +1290,8 @@ class AccountMove(models.Model):
                         new_lines.append(line_data)
                     
                     if 'provider_invoice_serial' in vals:
+                        iva_amount = round(iva_amount, 2)
+                        iva_amount_currency = round(iva_amount_currency, 2)
                         move_date = datetime.now().date()
                         if 'date' in vals:
                             move_date = vals['date']
@@ -1174,31 +1305,31 @@ class AccountMove(models.Model):
                                     "discount": 0,
                                     "debit": 0,
                                     "credit": iva_amount,
-                                    "amount_currency": iva_amount,
+                                    "amount_currency": iva_amount_currency*-1,
                                     "currency_id": line_currency,
                                     "partner_id": vals["partner_id"],
                                     "exclude_from_invoice_tab": True,
                                     "date": move_date
                                 }
-                        else:
-                        
-                            iva_line = {
-                                "account_id": iva_retencion_account_id,
-                                "name": "Retencion de IVA",
-                                "quantity": 1,
-                                "price_unit": iva_amount * -1,
-                                "discount": 0,
-                                "debit": iva_amount,
-                                "credit": 0,
-                                "amount_currency": iva_amount,
-                                "currency_id": line_currency,
-                                "partner_id": vals["partner_id"],
-                                "exclude_from_invoice_tab": True,
-                                "date": move_date
-                            }
+                    else:
+                    
+                        iva_line = {
+                            "account_id": iva_retencion_account_id,
+                            "name": "Retencion de IVA",
+                            "quantity": 1,
+                            "price_unit": iva_amount * -1,
+                            "discount": 0,
+                            "debit": iva_amount,
+                            "credit": 0,
+                            "amount_currency": iva_amount_currency,
+                            "currency_id": line_currency,
+                            "partner_id": vals["partner_id"],
+                            "exclude_from_invoice_tab": True,
+                            "date": move_date
+                        }
                     if vals['type_invoice'] != 'special_invoice':
                         new_lines.append(iva_line)
-                        print('LINES DATA', new_lines)
+                        print('LINES DATA', iva_line)
                         #raise ValidationError('STOP!')
                         vals.update({"line_ids": [(0, 0, line) for line in new_lines]})
                     
@@ -1212,17 +1343,24 @@ class AccountMove(models.Model):
                             line_currency = False
                             currency_amount = 0
                             isr_amount = vals['isr_withold_amount']
+                            
                             if 'currency_id' in vals:
                                 company_currency = company_id.currency_id.id
                                 has_foreign_currency = vals['currency_id'] and vals['currency_id'] != company_currency
+                                
                                 if has_foreign_currency:
-                                    currency_amount = isr_amount
-                                    line_currency = company_currency
-                                else:
+                                    isr_amount_currency = vals['isr_withold_amount']
+                                    rate = 1
+                                    if vals['conversion_rate_ref'] > 0:
+                                        rate = 1 / vals['conversion_rate_ref']
+                                        isr_amount = vals['isr_withold_amount'] / rate #SE HACE LA CONVERSIÓN PARA QUE LA LÍNEA QUE AGREGUE A LOS APUNTES CONTABLES SÍ ESTE QUETZALIZADO
+                                    
                                     line_currency = vals['currency_id']
-                                    currency_amount = isr_amount
+                                    
+                                else:
+                                    line_currency = company_currency
+                                    
                             else:
-                                currency_amount = isr_amount
                                 company_currency = company_id.currency_id.id
                                 line_currency = company_currency
                             if company_id.isr_retencion_account_id:
@@ -1246,7 +1384,7 @@ class AccountMove(models.Model):
                                     price_unit = line[2]['price_unit'] + isr_amount
                                     credit = line[2]['credit'] - isr_amount
                                     #balance = line[2]['balance'] + isr_amount
-                                    amount_currency = line[2]['amount_currency'] + isr_amount
+                                    amount_currency = line[2]['amount_currency'] + isr_amount_currency
                                     #price_subtotal = line[2]['price_subtotal'] + isr_amount
                                     #price_total = line[2]['price_total'] + isr_amount
                                     line[2].update(
@@ -1270,6 +1408,8 @@ class AccountMove(models.Model):
                             move_date = datetime.now().date()
                             if 'date' in vals:
                                 move_date = vals['date']
+                            isr_amount = round(isr_amount, 2)
+                            isr_amount_currency = round(isr_amount_currency, 2)
                             isr_line = {
                                 "account_id": isr_retencion_account_id,
                                 "name": "Retencion de ISR",
@@ -1278,7 +1418,7 @@ class AccountMove(models.Model):
                                 "discount": 0,
                                 "debit": 0,
                                 "credit": isr_amount,
-                                "amount_currency": isr_amount * -1,
+                                "amount_currency": isr_amount_currency *-1,
                                 "currency_id": line_currency,
                                 "partner_id": vals["partner_id"],
                                 "date": move_date,
@@ -1327,13 +1467,13 @@ class AccountMove(models.Model):
                                 price_unit = line[2]['price_unit'] + isr_amount
                                 debit = line[2]['debit'] - isr_amount
                                 
-                                amount_currency = line[2]['amount_currency'] - isr_amount
+                                amount_currency = line[2]['amount_currency'] - isr_amount_currency
                                 
                                 line[2].update(
                                     {
-                                        "price_unit": price_unit, 
-                                        "debit": debit,                                         
-                                        "amount_currency": amount_currency
+                                        "price_unit": round(price_unit, 2), 
+                                        "debit": round(debit, 2),
+                                        "amount_currency": round(amount_currency, 2)
                                     }
                                 )    
                         vals.update({"line_ids": current_lines})
@@ -1347,7 +1487,8 @@ class AccountMove(models.Model):
                         move_date = datetime.now().date()
                         if 'date' in vals:
                             move_date = vals['date']
-                            
+                        
+                        isr_amount = round(isr_amount, 2)
                         isr_line = {
                             "account_id": isr_retencion_account_id,
                             #"sequence": line_data["sequence"],
@@ -1357,7 +1498,7 @@ class AccountMove(models.Model):
                             "discount": 0,
                             "debit": isr_amount,
                             "credit": 0,
-                            "amount_currency": isr_amount * -1,
+                            "amount_currency": isr_amount_currency,
                             #"date_maturity": line_data["date_maturity"],
                             "currency_id": line_currency,
                             "partner_id": vals["partner_id"],
@@ -1528,7 +1669,19 @@ class AccountMove(models.Model):
 
                 if not has_foreign_currency:
                     move.amount_total = move.amount_untaxed + move.amount_tax - move.tax_withholding_price
-
+                    base_amount = move.amount_total
+                else:
+                    base_amount = move.amount_total
+                    rate = 1
+                    if move.currency_id.id != self.env.company.currency_id.id:
+                        rate = 1 / move.conversion_rate_ref if move.conversion_rate_ref > 0 else 1
+                        base_amount = move.amount_total / rate  #SE HACE LA CONVERSIÓN SOLO PARA QUE CUMPLA LAS CONDICIONES PARA EL CÁLCULO
+                
+                print('------------------ COMPUTE AMOUNT ------------------')
+                print(has_foreign_currency)
+                print(base_amount)
+                print('------------------ COMPUTE AMOUNT ------------------')
+                
                 for invoice in self:
                     
                     partner_vat = invoice.partner_id.vat
@@ -1599,115 +1752,304 @@ class AccountMove(models.Model):
                         
                         if partner_iva_agent_type != 'no_witholding' and company_iva_agent_type == 'no_witholding' and invoice.journal_id.is_receipt_journal is False:
                             
-                            if isr_withold_type == 'small_taxpayer_withholding' and invoice.amount_total > 2500:
+                            iva_withhold_amount = 0
+                            
+                            if isr_withold_type == 'small_taxpayer_withholding' and base_amount > 2500:
                                 for invoice_line in invoice.invoice_line_ids:
+                                    timbre_tax_fel = False
+                                    if 'fel_timbre_tax' in self.env['account.tax']._fields:
+                                        if invoice_line.tax_ids:
+                                            for tax in invoice_line.tax_ids:
+                                                if tax.fel_timbre_tax:
+                                                    timbre_tax_fel = True
+                                                    
                                     total_amount = invoice_line.price_total
-                                    iva_amount = total_amount * 0.05
+                                    if not timbre_tax_fel:
+                                        iva_amount = total_amount * 0.05
+                                    else:
+                                        timbre_amount = invoice_line.price_total / 1.125
+                                        timbre_amount = timbre_amount * 0.005
+                                        total_amount = total_amount - timbre_amount
+                                        iva_amount = total_amount * 0.05
+                                        
                                     iva_withhold_amount += iva_amount
-                            elif invoice.type_invoice == 'special_invoice' and invoice.amount_total > 2500:
+                                    
+                            elif invoice.type_invoice == 'special_invoice' and base_amount > 2500:
                                 for invoice_line in invoice.invoice_line_ids:
                                     iva_amount = invoice_line.price_total - invoice_line.price_subtotal
                                     iva_withhold_amount += iva_amount
                             else:
-                                if partner_iva_agent_type == 'export' and invoice.amount_total > 2500:
+                                if partner_iva_agent_type == 'export' and base_amount > 2500:
                                     iva_withhold_amount = 0
                                     for invoice_line in invoice.invoice_line_ids:
+                                        
+                                        timbre_tax_fel = False
+                                        if 'fel_timbre_tax' in self.env['account.tax']._fields:
+                                            if invoice_line.tax_ids:
+                                                for tax in invoice_line.tax_ids:
+                                                    if tax.fel_timbre_tax:
+                                                        timbre_tax_fel = True
+                                        
                                         line_amount = invoice_line.price_unit * invoice_line.quantity
 
                                         # EVERY PRODUCT CATEGORY TAX PERCENTAGE IS SEPARATE IN CASE OF FUTHER LAW CHANGES
 
                                         if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'agriculture':
                                             iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            iva_amount = iva_amount * 0.65
+                                            if not timbre_tax_fel:
+                                                iva_amount = iva_amount * 0.65
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount = iva_amount - timbre_amount
+                                                iva_amount = iva_amount * 0.65
+                                                
                                             iva_withhold_amount += iva_amount
 
                                         if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'not_agriculture':
                                             iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            iva_amount = iva_amount * 0.15
+                                            if not timbre_tax_fel:
+                                                iva_amount = iva_amount * 0.15
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount = iva_amount - timbre_amount
+                                                iva_amount = iva_amount * 0.15
+                                                
                                             iva_withhold_amount += iva_amount
+
+                                            iva_amount_type_product = invoice_line.price_total - invoice_line.price_subtotal
+                                            if not timbre_tax_fel:
+                                                iva_amount_type_product = iva_amount_type_product * 0.15
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount_type_product = iva_amount_type_product - timbre_amount
+                                                iva_amount_type_product = iva_amount_type_product * 0.15
+                                                
+                                            iva_withhold_amount += iva_amount_type_product
 
                                         if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'good_services':
                                             iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            print('IVA', iva_amount)
-                                            iva_amount = iva_amount * 0.15
+                                            if not timbre_tax_fel:
+                                                iva_amount = iva_amount * 0.15
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount = iva_amount - timbre_amount
+                                                iva_amount = iva_amount * 0.15
+                                                
                                             iva_withhold_amount += iva_amount
-
                                 
-                                
-                                if partner_iva_agent_type == 'decree_28_89' and invoice.amount_total > 2500:
+                                if partner_iva_agent_type == 'decree_28_89' and base_amount > 2500:
                                     for invoice_line in invoice.invoice_line_ids:
+                                        timbre_tax_fel = False
+                                        if 'fel_timbre_tax' in self.env['account.tax']._fields:
+                                            if invoice_line.tax_ids:
+                                                for tax in invoice_line.tax_ids:
+                                                    if tax.fel_timbre_tax:
+                                                        timbre_tax_fel = True
+                                                        
                                         line_amount = invoice_line.price_unit * invoice_line.quantity
                                         if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'good_services':
                                             iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            iva_amount = iva_amount * 0.65
+                                            if not timbre_tax_fel:
+                                                iva_amount = iva_amount * 0.65
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount = iva_amount - timbre_amount
+                                                iva_amount = iva_amount * 0.65
+                                                
                                             iva_withhold_amount += iva_amount
 
-                                if partner_iva_agent_type == 'public_sector' and invoice.amount_total > 2500:
+                                if partner_iva_agent_type == 'public_sector' and base_amount > 2500:
                                     for invoice_line in invoice.invoice_line_ids:
+                                        timbre_tax_fel = False
+                                        if 'fel_timbre_tax' in self.env['account.tax']._fields:
+                                            if invoice_line.tax_ids:
+                                                for tax in invoice_line.tax_ids:
+                                                    if tax.fel_timbre_tax:
+                                                        timbre_tax_fel = True
+                                                        
                                         line_amount = invoice_line.price_unit * invoice_line.quantity
                                         if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'good_services':
                                             iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            iva_amount = iva_amount * 0.25
+                                            if not timbre_tax_fel:
+                                                iva_amount = iva_amount * 0.25
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount = iva_amount - timbre_amount
+                                                iva_amount = iva_amount * 0.25
+                                                
                                             iva_withhold_amount += iva_amount
 
-                                if partner_iva_agent_type == 'credit_cards_companies' and invoice.amount_total > 2500:
+                                if partner_iva_agent_type == 'credit_cards_companies' and base_amount > 2500:
                                     for invoice_line in invoice.invoice_line_ids:
+                                        timbre_tax_fel = False
+                                        if 'fel_timbre_tax' in self.env['account.tax']._fields:
+                                            if invoice_line.tax_ids:
+                                                for tax in invoice_line.tax_ids:
+                                                    if tax.fel_timbre_tax:
+                                                        timbre_tax_fel = True
+                                                        
                                         line_amount = invoice_line.price_unit * invoice_line.quantity
                                         if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'payment_creditholders':
                                             iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            iva_amount = iva_amount * 0.15
+                                            if not timbre_tax_fel:
+                                                iva_amount = iva_amount * 0.15
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount = iva_amount - timbre_amount
+                                                iva_amount = iva_amount * 0.15
+                                                
                                             iva_withhold_amount += iva_amount
 
                                         if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'fuel_payments':
                                             iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            iva_amount = iva_amount * 0.015
+                                            if not timbre_tax_fel:
+                                                iva_amount = iva_amount * 0.015
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount = iva_amount - timbre_amount
+                                                iva_amount = iva_amount * 0.015
+                                                
                                             iva_withhold_amount += iva_amount
 
-                                if partner_iva_agent_type == 'special_taxpayer' and invoice.amount_total > 2500:
+                                if partner_iva_agent_type == 'special_taxpayer' and base_amount > 2500:
                                     for invoice_line in invoice.invoice_line_ids:
+                                        timbre_tax_fel = False
+                                        if 'fel_timbre_tax' in self.env['account.tax']._fields:
+                                            if invoice_line.tax_ids:
+                                                for tax in invoice_line.tax_ids:
+                                                    if tax.fel_timbre_tax:
+                                                        timbre_tax_fel = True
 
                                         line_amount = invoice_line.price_unit * invoice_line.quantity
                                         if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'good_services':
                                             iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            iva_amount = iva_amount * 0.15
+                                            if not timbre_tax_fel:
+                                                iva_amount = iva_amount * 0.15
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount = iva_amount - timbre_amount
+                                                iva_amount = iva_amount * 0.15
+                                                
+                                            iva_withhold_amount += iva_amount
+                                            
+                                        else:
+                                            if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'not_agriculture':
+                                                iva_amount = invoice_line.price_total - invoice_line.price_subtotal
+                                                if not timbre_tax_fel:
+                                                    iva_amount = iva_amount * 0.15
+                                                else:
+                                                    timbre_amount = invoice_line.price_total / 1.125
+                                                    timbre_amount = timbre_amount * 0.005
+                                                    iva_amount = iva_amount - timbre_amount
+                                                    iva_amount = iva_amount * 0.15
+                                                    
+                                                iva_withhold_amount += iva_amount
+                                                
+                                                iva_amount_type_product = invoice_line.price_total - invoice_line.price_subtotal
+                                                if not timbre_tax_fel:
+                                                    iva_amount_type_product = iva_amount_type_product * 0.15
+                                                else:
+                                                    timbre_amount = invoice_line.price_total / 1.125
+                                                    timbre_amount = timbre_amount * 0.005
+                                                    iva_amount_type_product = iva_amount_type_product - timbre_amount
+                                                    iva_amount_type_product = iva_amount_type_product * 0.15
+                                                    
+                                                iva_withhold_amount += iva_amount_type_product
+                                                
+                                            else:
+                                                iva_amount = invoice_line.price_total - invoice_line.price_subtotal
+                                                if not timbre_tax_fel:
+                                                    iva_amount = iva_amount * 0.15
+                                                else:
+                                                    timbre_amount = invoice_line.price_total / 1.125
+                                                    timbre_amount = timbre_amount * 0.005
+                                                    iva_amount = iva_amount - timbre_amount
+                                                    iva_amount = iva_amount * 0.15
+                                                    
+                                                iva_withhold_amount += iva_amount
+                                            
+                                if partner_iva_agent_type == 'special_taxpayer_export' and base_amount > 2500:
+                                    for invoice_line in invoice.invoice_line_ids:
+                                        timbre_tax_fel = False
+                                        if 'fel_timbre_tax' in self.env['account.tax']._fields:
+                                            if invoice_line.tax_ids:
+                                                for tax in invoice_line.tax_ids:
+                                                    if tax.fel_timbre_tax:
+                                                        timbre_tax_fel = True
+                                                        
+                                        line_amount = invoice_line.price_unit * invoice_line.quantity
+                                        if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'good_services':
+                                            iva_amount = invoice_line.price_total - invoice_line.price_subtotal
+                                            if not timbre_tax_fel:
+                                                iva_amount = iva_amount * 0.80
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount = iva_amount - timbre_amount
+                                                iva_amount = iva_amount * 0.80
+                                                
                                             iva_withhold_amount += iva_amount
                                             
                                         else:
                                             iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            iva_amount = iva_amount * 0.15
+                                            if not timbre_tax_fel:
+                                                iva_amount = iva_amount * 0.80
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount = iva_amount - timbre_amount
+                                                iva_amount = iva_amount * 0.80
+                                                
                                             iva_withhold_amount += iva_amount
-                                            
-                                if partner_iva_agent_type == 'special_taxpayer_export' and invoice.amount_total > 2500:
+
+                                if partner_iva_agent_type == 'others' and base_amount > 2500:
                                     for invoice_line in invoice.invoice_line_ids:
+                                        timbre_tax_fel = False
+                                        if 'fel_timbre_tax' in self.env['account.tax']._fields:
+                                            if invoice_line.tax_ids:
+                                                for tax in invoice_line.tax_ids:
+                                                    if tax.fel_timbre_tax:
+                                                        timbre_tax_fel = True
 
                                         line_amount = invoice_line.price_unit * invoice_line.quantity
                                         if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'good_services':
                                             iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            iva_amount = iva_amount * 0.80
-                                            iva_withhold_amount += iva_amount
-                                            
-                                        else:
-                                            iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            iva_amount = iva_amount * 0.80
-                                            iva_withhold_amount += iva_amount
-
-                                if partner_iva_agent_type == 'others' and invoice.amount_total > 2500:
-                                    for invoice_line in invoice.invoice_line_ids:
-                                        line_amount = invoice_line.price_unit * invoice_line.quantity
-                                        if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'good_services':
-                                            iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            iva_amount = iva_amount * 0.15
+                                            if not timbre_tax_fel:
+                                                iva_amount = iva_amount * 0.15
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount = iva_amount - timbre_amount
+                                                iva_amount = iva_amount * 0.15
+                                                
                                             iva_withhold_amount += iva_amount
                                         else:
                                             iva_amount = invoice_line.price_total - invoice_line.price_subtotal
-                                            iva_amount = iva_amount * 0.15
+                                            if not timbre_tax_fel:
+                                                iva_amount = iva_amount * 0.15
+                                            else:
+                                                timbre_amount = invoice_line.price_total / 1.125
+                                                timbre_amount = timbre_amount * 0.005
+                                                iva_amount = iva_amount - timbre_amount
+                                                iva_amount = iva_amount * 0.15
+                                                  
                                             iva_withhold_amount += iva_amount
 
                             # if invoice.tax_withholding_amount_iva :
                             invoice.tax_withholding_amount_iva = iva_withhold_amount
                             invoice.iva_withold_amount = iva_withhold_amount
-                            if not has_foreign_currency:
-                                invoice.amount_total = invoice.amount_total - iva_withhold_amount
+                            #if not has_foreign_currency:
+                            #    invoice.amount_total = invoice.amount_total - iva_withhold_amount
+                            invoice.amount_total = invoice.amount_total - iva_withhold_amount
 
                     # COMPRA
 
@@ -1741,20 +2083,20 @@ class AccountMove(models.Model):
                                         if tax_data['id'] == iva_tax_id:
                                             iva_amount += tax_data['amount']
 
-                            if isr_withold_type == 'small_taxpayer_withholding' and invoice.amount_total > 2500:
+                            if isr_withold_type == 'small_taxpayer_withholding' and base_amount > 2500:
                                 for invoice_line in invoice.invoice_line_ids:
                                     
                                     total_amount = invoice_line.price_total
                                     iva_amount = total_amount * 0.05
                                     iva_withhold_amount += iva_amount
-                            elif invoice.type_invoice == 'special_invoice' and invoice.amount_total > 2500:
+                            elif invoice.type_invoice == 'special_invoice' and base_amount > 2500:
                                 for invoice_line in invoice.invoice_line_ids:
                                     if iva_amount == 0:
                                         iva_amount = invoice_line.price_total - invoice_line.price_subtotal
                                     iva_withhold_amount += iva_amount
 
                             else:
-                                if company_iva_agent_type == 'export' and invoice.amount_total > 2500:
+                                if company_iva_agent_type == 'export' and base_amount > 2500:
                                     iva_withhold_amount = 0
                                     for invoice_line in invoice.invoice_line_ids:
                                         line_amount = invoice_line.price_unit * invoice_line.quantity
@@ -1779,7 +2121,7 @@ class AccountMove(models.Model):
                                             iva_amount = iva_amount * 0.15
                                             iva_withhold_amount += iva_amount
 
-                                if company_iva_agent_type == 'decree_28_89' and invoice.amount_total > 2500:
+                                if company_iva_agent_type == 'decree_28_89' and base_amount > 2500:
                                     for invoice_line in invoice.invoice_line_ids:
                                         line_amount = invoice_line.price_unit * invoice_line.quantity
                                         if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'good_services':
@@ -1788,7 +2130,7 @@ class AccountMove(models.Model):
                                             iva_amount = iva_amount * 0.65
                                             iva_withhold_amount += iva_amount
 
-                                if company_iva_agent_type == 'public_sector' and invoice.amount_total > 2500:
+                                if company_iva_agent_type == 'public_sector' and base_amount > 2500:
                                     for invoice_line in invoice.invoice_line_ids:
                                         line_amount = invoice_line.price_unit * invoice_line.quantity
                                         if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'good_services':
@@ -1797,7 +2139,7 @@ class AccountMove(models.Model):
                                             iva_amount = iva_amount * 0.25
                                             iva_withhold_amount += iva_amount
 
-                                if company_iva_agent_type == 'credit_cards_companies' and invoice.amount_total > 2500:
+                                if company_iva_agent_type == 'credit_cards_companies' and base_amount > 2500:
                                     for invoice_line in invoice.invoice_line_ids:
                                         line_amount = invoice_line.price_unit * invoice_line.quantity
                                         if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'payment_creditholders':
@@ -1812,7 +2154,7 @@ class AccountMove(models.Model):
                                             iva_amount = iva_amount * 0.015
                                             iva_withhold_amount += iva_amount
 
-                                if company_iva_agent_type == 'special_taxpayer' and invoice.amount_total > 2500:
+                                if company_iva_agent_type == 'special_taxpayer' and base_amount > 2500:
                                     for invoice_line in invoice.invoice_line_ids:
                                         
                                         line_amount = invoice_line.price_unit * invoice_line.quantity
@@ -1822,7 +2164,7 @@ class AccountMove(models.Model):
                                             iva_amount = iva_amount * 0.15
                                             iva_withhold_amount += iva_amount
 
-                                if company_iva_agent_type == 'others' and invoice.amount_total > 2500:
+                                if company_iva_agent_type == 'others' and base_amount > 2500:
                                         
                                     line_amount = invoice_line.price_unit * invoice_line.quantity
                                     if invoice_line.product_id.product_tmpl_id.categ_id.sat_iva_type_product == 'good_services':
@@ -1834,8 +2176,9 @@ class AccountMove(models.Model):
                             # if invoice.tax_withholding_amount_iva:
                             invoice.tax_withholding_amount_iva = iva_withhold_amount
                             invoice.iva_withold_amount = iva_withhold_amount
-                            if not has_foreign_currency:
-                                invoice.amount_total = invoice.amount_total - iva_withhold_amount
+                            #if not has_foreign_currency:
+                            #    invoice.amount_total = invoice.amount_total - iva_withhold_amount
+                            invoice.amount_total = invoice.amount_total - iva_withhold_amount
 
                     
                     if isr_withold_type == 'definitive_withholding' and invoice.journal_id.is_receipt_journal is False and invoice.partner_id.vat != False and partner_vat != "CF":
@@ -2102,8 +2445,6 @@ class AccountMove(models.Model):
                 else:
                     is_service = True
 
-
-
         #Cambia el tipo de la factura dependiendo el tipo de las líneas de la facturas
         if is_mix:
             self.tipo_gasto = 'mixto'
@@ -2116,8 +2457,7 @@ class AccountMove(models.Model):
         elif is_gas:
             self.tipo_gasto = 'combustible'
 
-        account_id = 7
-
+        
         self._compute_amount()
 
         for move in self:
@@ -2132,22 +2472,6 @@ class AccountMove(models.Model):
 
                 move.line_ids = move_lines
 
-        """
-        if self.type_invoice == "special_invoice":
-            tax_obj = self.env['account.tax'].search(
-                [('name', '=', 'IVA FACTURAS ESPECIALES'), ('company_id', '=', self.company_id.id)], limit=1)
-            account_id = 7
-            if tax_obj:
-                account_id = tax_obj.account_id.id
-            iva_create = {'invoice_id': self.id, 'name': "IVA FACTURAS ESPECIALES",
-                          'amount': self.amount_tax * -1, 'manual': False,
-                          'sequence': 0, 'account_analytic_id': False, 'account_id':  account_id, 'analytic_tag_ids': False,
-                          }
-            tax_obj = self.env['account.tax'].search([('name', '=', 'ISR FACTURAS ESPECIALES'), ('company_id', '=', self.company_id.id)], limit=1)
-            account_id = 7
-            if tax_obj:
-                account_id = tax_obj.account_id.id
-        """
 
         return res
 

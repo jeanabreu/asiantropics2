@@ -43,6 +43,34 @@
 
                     </div>
                 </div>
+                <div>
+                    <h2>Pagos electronicos</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-xs-12 col-md-12 o_setting_box">
+                            <div class="o_setting_right_pane">
+                                <label for="user_electronic_payment" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="user_electronic_payment" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Bo. Pagos electronicos
+                                    </div>
+                                </div>
+                                <label for="manager_electronic_payment" />
+                                <div class="row">
+                                    <div class="text-muted col-lg-12">
+                                        <field name="manager_electronic_payment" />
+                                    </div>
+                                    <div class="text-muted col-lg-12">
+                                        Encargado Pagos electronicos
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
             </xpath>
         </field>
 

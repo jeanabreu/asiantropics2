@@ -9,7 +9,7 @@ import math
 class ReporteVentas(models.AbstractModel):
     _name = 'report.l10n_gt_extra.reporte_ventas'
     _description = 'Report Diario'
-    
+
     def lineas(self, datos):
         totales = {}
 
@@ -39,13 +39,17 @@ class ReporteVentas(models.AbstractModel):
 
             tipo_cambio = 1
             if f.currency_id.id != f.company_id.currency_id.id:
-                tipo_cambio = 7.65
-                currency_rate_query = self.env['res.currency.rate'].search([
-                    ('name', '<=', f.date)
-                ], order='name desc', limit=1)
-                for rate in currency_rate_query:
-                    tipo_cambio = rate.rate
-                    tipo_cambio = 1/tipo_cambio
+                if 'conversion_rate_ref' in self.env['account.move']._fields:
+                    if f.conversion_rate_ref > 0:
+                        tipo_cambio = f.conversion_rate_ref
+                else:
+                    tipo_cambio = 7.65
+                    currency_rate_query = self.env['res.currency.rate'].search([
+                        ('name', '=', f.date)
+                    ], order='name desc', limit=1)
+                    for rate in currency_rate_query:
+                        if rate.rate > 0:
+                            tipo_cambio = 1 / rate.rate
 
             tipo = 'FACT'
             signo = 1
@@ -55,6 +59,8 @@ class ReporteVentas(models.AbstractModel):
                     signo = -1
                 else:
                     tipo = 'ND'
+            if f.journal_id.is_receipt_journal == True:
+                tipo = 'REC'
 
             # numero = f.number or f.numero_viejo or '-',
             numero = f.name
@@ -69,6 +75,9 @@ class ReporteVentas(models.AbstractModel):
             # Por si usa tickets
             if 'requiere_resolucion' in f.journal_id.fields_get() and f.journal_id.requiere_resolucion:
                 numero = f.name
+                
+            if f.dte_number:
+                numero = f.dte_number
 
             if f.state == 'cancel':
                 numero = f.name
@@ -78,7 +87,7 @@ class ReporteVentas(models.AbstractModel):
             linea = {
                 'estado': f.state,
                 'tipo': tipo,
-                'serie': f.journal_id.code,
+                'serie': f.serie,
                 'fecha': f.invoice_date,
                 'numero': numero,
                 'cliente': cliente,
@@ -101,10 +110,12 @@ class ReporteVentas(models.AbstractModel):
                 lineas.append(linea)
                 continue
             
+            signo = 1
             for l in f.invoice_line_ids:
                 precio = (l.price_unit * (1-(l.discount or 0.0)/100.0)) 
                 if tipo == 'NC':
                     precio = precio * -1
+                    signo = -1
 
                 tipo_linea = f.tipo_gasto
                 if f.tipo_gasto == 'mixto':
@@ -127,27 +138,23 @@ class ReporteVentas(models.AbstractModel):
                             #muchos centavos se estaban perdiendo así que se coloca la validación si es en dolares
                             #que realice otro flujo para poder recuperar esos decimales que se pierden
                             if f.currency_id.id == f.company_id.currency_id.id:
-                                linea['iva'] += i['amount'] * signo
-                                totales[tipo_linea]['iva'] += i['amount']  * signo
-                                totales[tipo_linea]['total'] += i['amount']  * signo
+                                linea['iva'] += i['amount'] 
+                                totales[tipo_linea]['iva'] += i['amount']  
+                                totales[tipo_linea]['total'] += i['amount']  
                             else:
-                                amount = (precio * l.quantity * tipo_cambio) - base_price
-                                linea['iva'] += amount
-                                totales[tipo_linea]['iva'] += amount
-                                totales[tipo_linea]['total'] += amount
+                                amount = (precio * l.quantity * tipo_cambio) - base_price 
+                                linea['iva'] += amount 
+                                totales[tipo_linea]['iva'] += amount 
+                                totales[tipo_linea]['total'] += amount 
                         elif i['amount'] > 0:
-                            linea[tipo_linea+'_exento'] += i['amount']  * signo
-                            totales[tipo_linea]['exento'] += i['amount']  * signo
-                            totales['extentos'] += i['amount']  * signo
+                            linea[tipo_linea+'_exento'] += i['amount']  
+                            totales[tipo_linea]['exento'] += i['amount']  
+                            totales['extentos'] += i['amount']  
                 else:
                     linea[tipo_linea+'_exento'] += base_price  
                     linea['total_extento'] += base_price
-                    print("\n\nENTRA A SUMAR EL EXENTO")  
-                    print(base_price)
-                    print(tipo_linea)
                     totales[tipo_linea]['exento'] += base_price  
                     totales['extentos'] += base_price
-                    print(totales[tipo_linea]['exento'])  
                 if f.currency_id.id != f.company_id.currency_id.id:
                     invoice_currency_total = round(precio * l.quantity * tipo_cambio, 2)
                     diff_totals = abs(round(invoice_currency_total - f.amount_total_signed, 5))
@@ -220,4 +227,3 @@ class ReporteVentas(models.AbstractModel):
 def truncate(number, digits) -> float:
     stepper = 10.0 ** digits
     return math.trunc(stepper * number) / stepper
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

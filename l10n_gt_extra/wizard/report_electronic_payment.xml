@@ -135,30 +135,12 @@
                         </div>
                         <div class="row">
                             <div class="col-3 text-center">
-                                Cuentas por Pagar
+                                <span t-esc="user_electronic_payment"/>
                             </div>
                             <div class="col-3"></div>
                             <div class="col-3"></div>
                             <div class="col-3 text-center">
-                                Contador General
-                            </div>
-                        </div>
-                        <br/>
-                        <br/>
-                        <div class="row" style="margin-top: 50px;">
-                            <div class="col-3" style="border-bottom: 1px solid;"></div>
-                            <div class="col-3"></div>
-                            <div class="col-3"></div>
-                            <div class="col-3" style="border-bottom: 1px solid;"></div>
-                        </div>
-                        <div class="row">
-                            <div class="col-3 text-center">
-                                Gerente Financiero
-                            </div>
-                            <div class="col-3"></div>
-                            <div class="col-3"></div>
-                            <div class="col-3 text-center">
-                                Gerente General
+                                <span t-esc="manager_electronic_payment"/>
                             </div>
                         </div>
                     </div>

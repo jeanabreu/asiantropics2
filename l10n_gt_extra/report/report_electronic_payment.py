@@ -63,7 +63,8 @@ class ReportElectronicPayment(models.AbstractModel):
                 ])
                 if credit_notes:
                     total_credit_notes = credit_notes.amount_total_signed
-
+        user_electronic_payment = self.env.user.company_id.user_electronic_payment.name
+        manager_electronic_payment = self.env.user.company_id.manager_electronic_payment.name
         print('DATA', data['form'])
         return {
             'doc_ids': self.ids,
@@ -77,6 +78,8 @@ class ReportElectronicPayment(models.AbstractModel):
             'lines': self.lines(data['form']),
             'company_id': self.env['res.company'].browse(
                 self.env.user.company_id.id),
+            'user_electronic_payment':user_electronic_payment,
+            'manager_electronic_payment':manager_electronic_payment,
         }
 
     def current_date_format(self, date, weekday_label=True):
